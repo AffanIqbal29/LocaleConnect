@@ -1,3 +1,46 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-local",
+      "description": "Charming local marketplace",
+      "imageUrl": "https://picsum.photos/seed/locale1/1200/600",
+      "imageHint": "local market"
+    },
+    {
+      "id": "bakery-shop",
+      "description": "Freshly baked bread",
+      "imageUrl": "https://picsum.photos/seed/locale2/600/400",
+      "imageHint": "bakery bread"
+    },
+    {
+      "id": "boutique-shop",
+      "description": "Elegant clothing boutique",
+      "imageUrl": "https://picsum.photos/seed/locale3/600/400",
+      "imageHint": "clothing boutique"
+    },
+    {
+      "id": "cafe-shop",
+      "description": "Cozy neighborhood cafe",
+      "imageUrl": "https://picsum.photos/seed/locale4/600/400",
+      "imageHint": "cozy cafe"
+    },
+    {
+      "id": "product-pottery",
+      "description": "Handmade ceramic pot",
+      "imageUrl": "https://picsum.photos/seed/prod1/400/400",
+      "imageHint": "handmade pottery"
+    },
+    {
+      "id": "product-coffee",
+      "description": "Artisanal coffee beans",
+      "imageUrl": "https://picsum.photos/seed/prod2/400/400",
+      "imageHint": "coffee beans"
+    },
+    {
+      "id": "product-honey",
+      "description": "Local organic honey",
+      "imageUrl": "https://picsum.photos/seed/prod3/400/400",
+      "imageHint": "organic honey"
+    }
+  ]
 }
