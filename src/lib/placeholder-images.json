@@ -8,13 +8,13 @@
     },
     {
       "id": "bakery-shop",
-      "description": "Freshly baked bread",
+      "description": "Bakery storefront with treats",
       "imageUrl": "https://picsum.photos/seed/locale2/600/400",
-      "imageHint": "bakery bread"
+      "imageHint": "bakery shop"
     },
     {
       "id": "boutique-shop",
-      "description": "Elegant clothing boutique",
+      "description": "Elegant clothing boutique interior",
       "imageUrl": "https://picsum.photos/seed/locale3/600/400",
       "imageHint": "clothing boutique"
     },
@@ -71,6 +71,18 @@
       "description": "Hand-knitted woolen scarf",
       "imageUrl": "https://picsum.photos/seed/prod8/400/400",
       "imageHint": "knitted scarf"
+    },
+    {
+      "id": "product-bread",
+      "description": "Freshly baked sourdough bread",
+      "imageUrl": "https://picsum.photos/seed/prod9/400/400",
+      "imageHint": "sourdough bread"
+    },
+    {
+      "id": "product-jacket",
+      "description": "Classic vintage denim jacket",
+      "imageUrl": "https://picsum.photos/seed/prod10/400/400",
+      "imageHint": "denim jacket"
     }
   ]
 }
