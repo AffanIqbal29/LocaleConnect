@@ -52,7 +52,7 @@ export let shops: Shop[] = [
     location: "101 River Road",
     hours: "11 AM - 4 PM",
     rating: 5.0,
-    imageUrl: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "",
+    imageUrl: PlaceHolderImages.find(img => img.id === 'product-mug')?.imageUrl || "",
     createdAt: new Date(),
   }
 ];
@@ -65,7 +65,7 @@ export let products: Product[] = [
     description: "A beautiful, hand-thrown ceramic mug with a unique glaze finish.",
     price: 240.00,
     category: "Home",
-    imageUrl: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "",
+    imageUrl: PlaceHolderImages.find(img => img.id === 'product-mug')?.imageUrl || "",
     stockQuantity: 12,
     isActive: true,
     createdAt: new Date(),
@@ -74,7 +74,7 @@ export let products: Product[] = [
     id: 'p2',
     shopId: 's1',
     name: "Wildflower Honey",
-    description: "Pure, raw honey collected from local wildflowers.",
+    description: "Pure, raw honey collected from local wildflowers in recycled glass jars.",
     price: 125.50,
     category: "Food",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-honey')?.imageUrl || "",

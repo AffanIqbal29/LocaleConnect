@@ -25,63 +25,63 @@
       "imageHint": "cozy cafe"
     },
     {
-      "id": "product-pottery",
-      "description": "Handmade ceramic pot",
-      "imageUrl": "https://picsum.photos/seed/prod1/400/400",
-      "imageHint": "handmade pottery"
+      "id": "product-mug",
+      "description": "Handmade ceramic mug",
+      "imageUrl": "https://picsum.photos/seed/mug123/400/400",
+      "imageHint": "ceramic mug"
     },
     {
       "id": "product-coffee",
-      "description": "Artisanal coffee beans",
-      "imageUrl": "https://picsum.photos/seed/prod2/400/400",
-      "imageHint": "coffee beans"
+      "description": "Artisanal coffee beans bag",
+      "imageUrl": "https://picsum.photos/seed/coffee456/400/400",
+      "imageHint": "coffee bag"
     },
     {
       "id": "product-honey",
-      "description": "Local organic honey",
-      "imageUrl": "https://picsum.photos/seed/prod3/400/400",
-      "imageHint": "organic honey"
+      "description": "Bottle of local organic honey",
+      "imageUrl": "https://picsum.photos/seed/honey789/400/400",
+      "imageHint": "honey bottle"
     },
     {
       "id": "product-candle",
       "description": "Hand-poured soy candle",
-      "imageUrl": "https://picsum.photos/seed/prod4/400/400",
+      "imageUrl": "https://picsum.photos/seed/candle101/400/400",
       "imageHint": "scented candle"
     },
     {
       "id": "product-soap",
       "description": "Organic artisan soap bar",
-      "imageUrl": "https://picsum.photos/seed/prod5/400/400",
+      "imageUrl": "https://picsum.photos/seed/soap202/400/400",
       "imageHint": "artisan soap"
     },
     {
       "id": "product-tote",
       "description": "Hand-painted canvas tote",
-      "imageUrl": "https://picsum.photos/seed/prod6/400/400",
+      "imageUrl": "https://picsum.photos/seed/tote303/400/400",
       "imageHint": "canvas bag"
     },
     {
       "id": "product-spoon",
       "description": "Hand-carved wooden spoons",
-      "imageUrl": "https://picsum.photos/seed/prod7/400/400",
-      "imageHint": "wooden kitchenware"
+      "imageUrl": "https://picsum.photos/seed/spoon404/400/400",
+      "imageHint": "wooden spoon"
     },
     {
       "id": "product-scarf",
       "description": "Hand-knitted woolen scarf",
-      "imageUrl": "https://picsum.photos/seed/prod8/400/400",
+      "imageUrl": "https://picsum.photos/seed/scarf505/400/400",
       "imageHint": "knitted scarf"
     },
     {
       "id": "product-bread",
-      "description": "Freshly baked sourdough bread",
-      "imageUrl": "https://picsum.photos/seed/prod9/400/400",
+      "description": "Freshly baked sourdough bread loaf",
+      "imageUrl": "https://picsum.photos/seed/bread606/400/400",
       "imageHint": "sourdough bread"
     },
     {
       "id": "product-jacket",
       "description": "Classic vintage denim jacket",
-      "imageUrl": "https://picsum.photos/seed/prod10/400/400",
+      "imageUrl": "https://picsum.photos/seed/jacket707/400/400",
       "imageHint": "denim jacket"
     }
   ]
