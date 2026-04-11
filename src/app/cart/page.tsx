@@ -1,17 +1,38 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/cart-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, CreditCard } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, CreditCard, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CartPage() {
-  const { items, totalPrice, updateQuantity, removeFromCart, totalItems } = useCart();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { items, totalPrice, updateQuantity, removeFromCart, totalItems, clearCart } = useCart();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleCheckout = async () => {
+    setIsCheckingOut(true);
+    // Simulate order processing delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    toast({
+      title: "Processing your order...",
+      description: "Connecting with local shops to confirm availability.",
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    clearCart();
+    router.push('/checkout/success');
+  };
 
   if (items.length === 0) {
     return (
@@ -132,8 +153,16 @@ export default function CartPage() {
                 <span className="text-3xl font-bold text-primary">₹{(totalPrice + 15).toFixed(2)}</span>
               </div>
               
-              <Button className="w-full h-14 text-lg font-medium shadow-xl">
-                Proceed to Checkout <CreditCard className="ml-2 h-5 w-5" />
+              <Button 
+                className="w-full h-14 text-lg font-medium shadow-xl" 
+                onClick={handleCheckout}
+                disabled={isCheckingOut}
+              >
+                {isCheckingOut ? (
+                  <>Processing... <Loader2 className="ml-2 h-5 w-5 animate-spin" /></>
+                ) : (
+                  <>Proceed to Checkout <CreditCard className="ml-2 h-5 w-5" /></>
+                )}
               </Button>
               
               <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
