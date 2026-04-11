@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,37 +18,52 @@ import {
   MapPin, 
   Smartphone,
   Trash2,
-  Edit
+  Edit,
+  Loader2
 } from 'lucide-react';
 import { generateProductDescription } from '@/ai/flows/generate-product-description-flow';
 import { generateShopProfileDescription } from '@/ai/flows/generate-shop-profile-description';
 import { useToast } from '@/hooks/use-toast';
+import { getProducts, addProduct, deleteProduct } from '@/app/actions/product-actions';
+import { updateShopProfile, getShopById } from '@/app/actions/shop-actions';
+import { Product, Shop } from '@/app/lib/types';
 
 export default function VendorDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('products');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [vendorProducts, setVendorProducts] = useState<Product[]>([]);
 
-  // Shop state
-  const [shopInfo, setShopInfo] = useState({
-    name: "Bloom Bakery",
-    type: "Bakery",
-    location: "123 Maple St, Old Town",
-    description: "Our little neighborhood bakery specializing in sourdough and sweet treats.",
-    hours: "8 AM - 6 PM",
-  });
+  // Shop state (hardcoded to s1 for demo)
+  const [shopInfo, setShopInfo] = useState<Shop | null>(null);
 
   // Product form state
-  const [newProduct, setNewProduct] = useState({
+  const [newProductForm, setNewProductForm] = useState({
     name: "",
     price: "",
     keywords: "",
     details: "",
-    description: ""
+    description: "",
+    category: "General"
   });
 
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      const [allProducts, shop] = await Promise.all([
+        getProducts(),
+        getShopById('s1')
+      ]);
+      setVendorProducts(allProducts.filter(p => p.shopId === 's1'));
+      if (shop) setShopInfo(shop);
+      setIsLoading(false);
+    }
+    loadData();
+  }, []);
+
   const handleAiDescription = async () => {
-    if (!newProduct.name || !newProduct.keywords) {
+    if (!newProductForm.name || !newProductForm.keywords) {
       toast({
         title: "Missing info",
         description: "Please enter a product name and some keywords first.",
@@ -60,11 +75,11 @@ export default function VendorDashboard() {
     setIsGenerating(true);
     try {
       const result = await generateProductDescription({
-        productName: newProduct.name,
-        keywords: newProduct.keywords.split(',').map(k => k.trim()),
-        productDetails: newProduct.details
+        productName: newProductForm.name,
+        keywords: newProductForm.keywords.split(',').map(k => k.trim()),
+        productDetails: newProductForm.details
       });
-      setNewProduct(prev => ({ ...prev, description: result.description }));
+      setNewProductForm(prev => ({ ...prev, description: result.description }));
     } catch (error) {
       toast({ title: "AI Error", description: "Failed to generate description.", variant: "destructive" });
     } finally {
@@ -73,6 +88,7 @@ export default function VendorDashboard() {
   };
 
   const handleAiShopDescription = async () => {
+    if (!shopInfo) return;
     setIsGenerating(true);
     try {
       const result = await generateShopProfileDescription({
@@ -81,13 +97,57 @@ export default function VendorDashboard() {
         location: shopInfo.location,
         uniqueSellingPoints: ["Fresh daily", "Family owned", "Organic ingredients"]
       });
-      setShopInfo(prev => ({ ...prev, description: result.shopDescription }));
+      setShopInfo(prev => prev ? ({ ...prev, description: result.shopDescription }) : null);
     } catch (error) {
       toast({ title: "AI Error", description: "Failed to generate shop description.", variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
   };
+
+  const handleAddProduct = async () => {
+    if (!newProductForm.name || !newProductForm.price) {
+      toast({ title: "Validation", description: "Name and price are required.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const prod = await addProduct({
+        name: newProductForm.name,
+        price: parseFloat(newProductForm.price),
+        description: newProductForm.description,
+        category: newProductForm.category,
+        shopId: 's1'
+      });
+      setVendorProducts(prev => [...prev, prod]);
+      setNewProductForm({ name: "", price: "", keywords: "", details: "", description: "", category: "General" });
+      toast({ title: "Success", description: "Product added to your shop." });
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to add product.", variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const ok = await deleteProduct(id);
+    if (ok) {
+      setVendorProducts(prev => prev.filter(p => p.id !== id));
+      toast({ title: "Deleted", description: "Product removed." });
+    }
+  };
+
+  const handleSaveShop = async () => {
+    if (!shopInfo) return;
+    await updateShopProfile(shopInfo.id, shopInfo);
+    toast({ title: "Profile Updated", description: "Your shop details have been saved." });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -123,33 +183,30 @@ export default function VendorDashboard() {
                   <CardTitle>Current Products</CardTitle>
                   <CardDescription>Manage your store inventory.</CardDescription>
                 </div>
-                <Button size="sm" variant="outline" className="text-xs h-8">
-                  <Plus className="h-4 w-4 mr-1" /> Add Batch
-                </Button>
               </CardHeader>
               <CardContent>
                 <div className="divide-y">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="py-4 flex items-center justify-between group">
+                  {vendorProducts.map((p) => (
+                    <div key={p.id} className="py-4 flex items-center justify-between group">
                       <div className="flex items-center gap-4">
                         <div className="h-16 w-16 bg-muted rounded-md overflow-hidden relative">
                            <img 
-                            src={`https://picsum.photos/seed/prod${i}/100`} 
-                            alt="Product" 
+                            src={p.imageUrl} 
+                            alt={p.name} 
                             className="object-cover h-full w-full"
                            />
                         </div>
                         <div>
-                          <h4 className="font-semibold">Product Item #{i}</h4>
-                          <p className="text-sm text-muted-foreground">₹120.00 • 15 in stock</p>
+                          <h4 className="font-semibold">{p.name}</h4>
+                          <p className="text-sm text-muted-foreground">₹{p.price.toFixed(2)} • {p.stockQuantity} in stock</p>
                         </div>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   ))}
+                  {vendorProducts.length === 0 && <p className="py-8 text-center text-muted-foreground">No products added yet.</p>}
                 </div>
               </CardContent>
             </Card>
@@ -166,8 +223,8 @@ export default function VendorDashboard() {
                   <Label>Product Name</Label>
                   <Input 
                     placeholder="e.g., Organic Honey" 
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    value={newProductForm.name}
+                    onChange={(e) => setNewProductForm({...newProductForm, name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
@@ -175,8 +232,8 @@ export default function VendorDashboard() {
                   <Input 
                     type="number" 
                     placeholder="0.00" 
-                    value={newProduct.price}
-                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    value={newProductForm.price}
+                    onChange={(e) => setNewProductForm({...newProductForm, price: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
@@ -186,17 +243,8 @@ export default function VendorDashboard() {
                   </Label>
                   <Input 
                     placeholder="local, organic, sweet..." 
-                    value={newProduct.keywords}
-                    onChange={(e) => setNewProduct({...newProduct, keywords: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Additional Details</Label>
-                  <Textarea 
-                    placeholder="Any specific features..." 
-                    className="min-h-[80px]"
-                    value={newProduct.details}
-                    onChange={(e) => setNewProduct({...newProduct, details: e.target.value})}
+                    value={newProductForm.keywords}
+                    onChange={(e) => setNewProductForm({...newProductForm, keywords: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2 pt-2">
@@ -216,11 +264,11 @@ export default function VendorDashboard() {
                   <Textarea 
                     placeholder="Describe your product..." 
                     className="min-h-[120px]"
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                    value={newProductForm.description}
+                    onChange={(e) => setNewProductForm({...newProductForm, description: e.target.value})}
                   />
                 </div>
-                <Button className="w-full h-12 mt-4 shadow-lg">Add Product</Button>
+                <Button className="w-full h-12 mt-4 shadow-lg" onClick={handleAddProduct}>Add Product</Button>
               </CardContent>
             </Card>
           </div>
@@ -233,36 +281,40 @@ export default function VendorDashboard() {
               <CardDescription>Update how customers see your store.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Shop Name</Label>
-                  <Input value={shopInfo.name} onChange={(e) => setShopInfo({...shopInfo, name: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Shop Type</Label>
-                  <Input value={shopInfo.type} onChange={(e) => setShopInfo({...shopInfo, type: e.target.value})} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="flex justify-between items-center">
-                  Shop Description
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleAiShopDescription}
-                    disabled={isGenerating}
-                    className="text-[10px] text-primary hover:bg-primary/10"
-                  >
-                    <Wand2 className="h-3 w-3 mr-1" /> Refresh with AI
-                  </Button>
-                </Label>
-                <Textarea 
-                  className="min-h-[150px]" 
-                  value={shopInfo.description}
-                  onChange={(e) => setShopInfo({...shopInfo, description: e.target.value})}
-                />
-              </div>
-              <Button className="w-full">Save Profile Changes</Button>
+              {shopInfo && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Shop Name</Label>
+                      <Input value={shopInfo.name} onChange={(e) => setShopInfo({...shopInfo, name: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Shop Type</Label>
+                      <Input value={shopInfo.type} onChange={(e) => setShopInfo({...shopInfo, type: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex justify-between items-center">
+                      Shop Description
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleAiShopDescription}
+                        disabled={isGenerating}
+                        className="text-[10px] text-primary hover:bg-primary/10"
+                      >
+                        <Wand2 className="h-3 w-3 mr-1" /> Refresh with AI
+                      </Button>
+                    </Label>
+                    <Textarea 
+                      className="min-h-[150px]" 
+                      value={shopInfo.description}
+                      onChange={(e) => setShopInfo({...shopInfo, description: e.target.value})}
+                    />
+                  </div>
+                </>
+              )}
+              <Button className="w-full" onClick={handleSaveShop}>Save Profile Changes</Button>
             </CardContent>
           </Card>
 
@@ -272,43 +324,31 @@ export default function VendorDashboard() {
               <CardDescription>Help customers find and reach you.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-2 rounded-full text-primary"><MapPin className="h-5 w-5" /></div>
-                  <div className="flex-1">
-                    <Label className="text-xs text-muted-foreground">Store Address</Label>
-                    <Input value={shopInfo.location} onChange={(e) => setShopInfo({...shopInfo, location: e.target.value})} />
+               {shopInfo && (
+                 <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-2 rounded-full text-primary"><MapPin className="h-5 w-5" /></div>
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground">Store Address</Label>
+                      <Input value={shopInfo.location} onChange={(e) => setShopInfo({...shopInfo, location: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-2 rounded-full text-primary"><Clock className="h-5 w-5" /></div>
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground">Opening Hours</Label>
+                      <Input value={shopInfo.hours} onChange={(e) => setShopInfo({...shopInfo, hours: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-2 rounded-full text-primary"><Smartphone className="h-5 w-5" /></div>
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground">Contact Phone</Label>
+                      <Input placeholder="+91 00000 00000" />
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-2 rounded-full text-primary"><Clock className="h-5 w-5" /></div>
-                  <div className="flex-1">
-                    <Label className="text-xs text-muted-foreground">Opening Hours</Label>
-                    <Input value={shopInfo.hours} onChange={(e) => setShopInfo({...shopInfo, hours: e.target.value})} />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-2 rounded-full text-primary"><Smartphone className="h-5 w-5" /></div>
-                  <div className="flex-1">
-                    <Label className="text-xs text-muted-foreground">Contact Phone</Label>
-                    <Input placeholder="+91 00000 00000" />
-                  </div>
-                </div>
-              </div>
-              <div className="pt-6">
-                <h4 className="font-semibold mb-3 text-sm">Shop Media</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="aspect-square bg-muted rounded-md flex items-center justify-center border-2 border-dashed border-muted-foreground/20 cursor-pointer hover:bg-muted/80 transition-colors">
-                    <Plus className="h-6 w-6 text-muted-foreground/40" />
-                  </div>
-                  <div className="aspect-square bg-muted rounded-md relative overflow-hidden group">
-                     <img src="https://picsum.photos/seed/locale2/200" className="object-cover h-full w-full" />
-                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Trash2 className="h-5 w-5 text-white" />
-                     </div>
-                  </div>
-                </div>
-              </div>
+               )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -320,7 +360,7 @@ export default function VendorDashboard() {
               <CardDescription>Manage your account and preferences.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground italic">Coming soon: Payment integration and delivery region settings.</p>
+              <p className="text-muted-foreground italic">Payment integration and delivery region settings are being finalized.</p>
             </CardContent>
           </Card>
         </TabsContent>
