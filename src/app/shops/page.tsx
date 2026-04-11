@@ -16,7 +16,7 @@ const allShops = [
     name: "Bloom Bakery",
     type: "Bakery",
     rating: 4.8,
-    distance: "0.5 miles",
+    distance: "500 m",
     image: PlaceHolderImages.find(img => img.id === 'bakery-shop')?.imageUrl || "",
     description: "Artisan sourdough and neighborhood favorites baked fresh daily."
   },
@@ -25,7 +25,7 @@ const allShops = [
     name: "The Velvet Hanger",
     type: "Boutique",
     rating: 4.9,
-    distance: "1.2 miles",
+    distance: "1.2 km",
     image: PlaceHolderImages.find(img => img.id === 'boutique-shop')?.imageUrl || "",
     description: "Curated vintage finds and modern sustainable fashion."
   },
@@ -34,7 +34,7 @@ const allShops = [
     name: "Steam & Bean",
     type: "Cafe",
     rating: 4.7,
-    distance: "0.8 miles",
+    distance: "800 m",
     image: PlaceHolderImages.find(img => img.id === 'cafe-shop')?.imageUrl || "",
     description: "Your local destination for specialty coffee and community vibes."
   },
@@ -43,7 +43,7 @@ const allShops = [
     name: "Clay Creations",
     type: "Pottery",
     rating: 5.0,
-    distance: "1.5 miles",
+    distance: "1.5 km",
     image: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "",
     description: "Handcrafted ceramics made right here in the neighborhood."
   }

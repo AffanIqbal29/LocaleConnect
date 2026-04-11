@@ -15,7 +15,7 @@ const featuredShops = [
     name: "Bloom Bakery",
     type: "Bakery",
     rating: 4.8,
-    distance: "0.5 miles",
+    distance: "500 m",
     image: PlaceHolderImages.find(img => img.id === 'bakery-shop')?.imageUrl || "",
   },
   {
@@ -23,7 +23,7 @@ const featuredShops = [
     name: "The Velvet Hanger",
     type: "Boutique",
     rating: 4.9,
-    distance: "1.2 miles",
+    distance: "1.2 km",
     image: PlaceHolderImages.find(img => img.id === 'boutique-shop')?.imageUrl || "",
   },
   {
@@ -31,7 +31,7 @@ const featuredShops = [
     name: "Steam & Bean",
     type: "Cafe",
     rating: 4.7,
-    distance: "0.8 miles",
+    distance: "800 m",
     image: PlaceHolderImages.find(img => img.id === 'cafe-shop')?.imageUrl || "",
   }
 ];
