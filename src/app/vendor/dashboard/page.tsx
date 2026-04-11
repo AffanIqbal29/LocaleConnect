@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
   Store, 
@@ -18,13 +18,15 @@ import {
   MapPin, 
   Smartphone,
   Trash2,
-  Edit,
-  Loader2
+  Tag,
+  Box,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { generateProductDescription } from '@/ai/flows/generate-product-description-flow';
 import { generateShopProfileDescription } from '@/ai/flows/generate-shop-profile-description';
 import { useToast } from '@/hooks/use-toast';
-import { getProducts, addProduct, deleteProduct } from '@/app/actions/product-actions';
+import { getProducts, addProduct, deleteProduct, updateProduct } from '@/app/actions/product-actions';
 import { updateShopProfile, getShopById } from '@/app/actions/shop-actions';
 import { Product, Shop } from '@/app/lib/types';
 
@@ -42,6 +44,8 @@ export default function VendorDashboard() {
   const [newProductForm, setNewProductForm] = useState({
     name: "",
     price: "",
+    discountPrice: "",
+    stockQuantity: "10",
     keywords: "",
     details: "",
     description: "",
@@ -115,15 +119,33 @@ export default function VendorDashboard() {
       const prod = await addProduct({
         name: newProductForm.name,
         price: parseFloat(newProductForm.price),
+        discountPrice: newProductForm.discountPrice ? parseFloat(newProductForm.discountPrice) : undefined,
+        stockQuantity: parseInt(newProductForm.stockQuantity),
         description: newProductForm.description,
         category: newProductForm.category,
         shopId: 's1'
       });
       setVendorProducts(prev => [...prev, prod]);
-      setNewProductForm({ name: "", price: "", keywords: "", details: "", description: "", category: "General" });
-      toast({ title: "Success", description: "Product added to your shop." });
+      setNewProductForm({ 
+        name: "", 
+        price: "", 
+        discountPrice: "", 
+        stockQuantity: "10", 
+        keywords: "", 
+        details: "", 
+        description: "", 
+        category: "General" 
+      });
+      toast({ title: "Success", description: "Product added to your inventory." });
     } catch (e) {
       toast({ title: "Error", description: "Failed to add product.", variant: "destructive" });
+    }
+  };
+
+  const handleUpdateStock = async (id: string, newStock: number) => {
+    const updated = await updateProduct(id, { stockQuantity: newStock });
+    if (updated) {
+      setVendorProducts(prev => prev.map(p => p.id === id ? updated : p));
     }
   };
 
@@ -131,7 +153,7 @@ export default function VendorDashboard() {
     const ok = await deleteProduct(id);
     if (ok) {
       setVendorProducts(prev => prev.filter(p => p.id !== id));
-      toast({ title: "Deleted", description: "Product removed." });
+      toast({ title: "Deleted", description: "Product removed from inventory." });
     }
   };
 
@@ -154,21 +176,21 @@ export default function VendorDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
           <h1 className="text-4xl font-headline mb-2">Vendor Dashboard</h1>
-          <p className="text-muted-foreground">Manage your shop and connect with your local customers.</p>
+          <p className="text-muted-foreground">Manage your neighborhood shop and inventory levels.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
           <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-sm font-medium text-primary">Shop Online</span>
+          <span className="text-sm font-medium text-primary">Store Front Active</span>
         </div>
       </div>
 
       <Tabs defaultValue="products" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <TabsList className="grid w-full max-w-md grid-cols-3 bg-white border h-12 shadow-sm">
           <TabsTrigger value="products" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Package className="h-4 w-4 mr-2" /> Products
+            <Package className="h-4 w-4 mr-2" /> Inventory
           </TabsTrigger>
           <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Store className="h-4 w-4 mr-2" /> Profile
+            <Store className="h-4 w-4 mr-2" /> Shop Profile
           </TabsTrigger>
           <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="h-4 w-4 mr-2" /> Settings
@@ -178,78 +200,146 @@ export default function VendorDashboard() {
         <TabsContent value="products" className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <Card className="lg:col-span-2 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Current Products</CardTitle>
-                  <CardDescription>Manage your store inventory.</CardDescription>
-                </div>
+              <CardHeader>
+                <CardTitle>Product Management</CardTitle>
+                <CardDescription>Monitor stock and adjust pricing for your customers.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="divide-y">
                   {vendorProducts.map((p) => (
-                    <div key={p.id} className="py-4 flex items-center justify-between group">
-                      <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 bg-muted rounded-md overflow-hidden relative">
+                    <div key={p.id} className="py-6 flex items-center justify-between group">
+                      <div className="flex items-center gap-6">
+                        <div className="h-20 w-20 bg-muted rounded-xl overflow-hidden relative shadow-inner">
                            <img 
                             src={p.imageUrl} 
                             alt={p.name} 
                             className="object-cover h-full w-full"
                            />
+                           {p.discountPrice && (
+                             <div className="absolute top-0 right-0 bg-accent text-white p-1 rounded-bl-lg">
+                               <Tag className="h-3 w-3" />
+                             </div>
+                           )}
                         </div>
-                        <div>
-                          <h4 className="font-semibold">{p.name}</h4>
-                          <p className="text-sm text-muted-foreground">₹{p.price.toFixed(2)} • {p.stockQuantity} in stock</p>
+                        <div className="space-y-1">
+                          <h4 className="font-semibold text-lg">{p.name}</h4>
+                          <div className="flex items-center gap-3">
+                            {p.discountPrice ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-primary font-bold">₹{p.discountPrice.toFixed(2)}</span>
+                                <span className="text-xs text-muted-foreground line-through">₹{p.price.toFixed(2)}</span>
+                                <Badge variant="outline" className="text-[10px] text-accent border-accent">Discount Active</Badge>
+                              </div>
+                            ) : (
+                              <span className="font-medium">₹{p.price.toFixed(2)}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 mt-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Box className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className={p.stockQuantity < 5 ? "text-destructive font-bold" : "text-muted-foreground"}>
+                                {p.stockQuantity} in stock
+                              </span>
+                            </div>
+                            {p.stockQuantity < 5 && (
+                              <Badge variant="destructive" className="h-5 text-[10px]">Low Stock</Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <div className="flex flex-col items-end gap-3">
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8"
+                            onClick={() => handleUpdateStock(p.id, p.stockQuantity + 5)}
+                          >
+                            Restock
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10" 
+                            onClick={() => handleDelete(p.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
-                  {vendorProducts.length === 0 && <p className="py-8 text-center text-muted-foreground">No products added yet.</p>}
+                  {vendorProducts.length === 0 && (
+                    <div className="py-12 text-center space-y-3">
+                      <Package className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+                      <p className="text-muted-foreground italic">Your inventory is currently empty.</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-primary/20">
+            <Card className="shadow-lg border-primary/20 h-fit sticky top-24">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5 text-primary" /> New Product
                 </CardTitle>
-                <CardDescription>Add a product to your catalog.</CardDescription>
+                <CardDescription>List a new item from your shop.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Product Name</Label>
                   <Input 
-                    placeholder="e.g., Organic Honey" 
+                    placeholder="e.g., Artisanal Sourdough" 
                     value={newProductForm.name}
                     onChange={(e) => setNewProductForm({...newProductForm, name: e.target.value})}
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Regular Price (₹)</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={newProductForm.price}
+                      onChange={(e) => setNewProductForm({...newProductForm, price: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stock Qty</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="10" 
+                      value={newProductForm.stockQuantity}
+                      onChange={(e) => setNewProductForm({...newProductForm, stockQuantity: e.target.value})}
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label>Price (₹)</Label>
+                  <Label className="flex items-center gap-1.5 text-accent">
+                    <Tag className="h-3.5 w-3.5" /> Sale Price (Optional)
+                  </Label>
                   <Input 
                     type="number" 
-                    placeholder="0.00" 
-                    value={newProductForm.price}
-                    onChange={(e) => setNewProductForm({...newProductForm, price: e.target.value})}
+                    placeholder="Discounted price" 
+                    value={newProductForm.discountPrice}
+                    onChange={(e) => setNewProductForm({...newProductForm, discountPrice: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="flex justify-between">
-                    Keywords 
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">AI Ready</span>
+                    AI Keywords 
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Powered by Genkit</span>
                   </Label>
                   <Input 
-                    placeholder="local, organic, sweet..." 
+                    placeholder="handmade, local, crusty..." 
                     value={newProductForm.keywords}
                     onChange={(e) => setNewProductForm({...newProductForm, keywords: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2 pt-2">
                   <div className="flex justify-between items-center">
-                    <Label>Product Description</Label>
+                    <Label>Description</Label>
                     <Button 
                       type="button"
                       variant="outline" 
@@ -258,17 +348,17 @@ export default function VendorDashboard() {
                       disabled={isGenerating}
                       className="text-[10px] h-7 bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
                     >
-                      {isGenerating ? "Magic..." : <><Wand2 className="h-3 w-3 mr-1" /> Generate with AI</>}
+                      {isGenerating ? "Thinking..." : <><Wand2 className="h-3 w-3 mr-1" /> Magic Write</>}
                     </Button>
                   </div>
                   <Textarea 
-                    placeholder="Describe your product..." 
-                    className="min-h-[120px]"
+                    placeholder="Tell your customers about this item..." 
+                    className="min-h-[100px] text-sm"
                     value={newProductForm.description}
                     onChange={(e) => setNewProductForm({...newProductForm, description: e.target.value})}
                   />
                 </div>
-                <Button className="w-full h-12 mt-4 shadow-lg" onClick={handleAddProduct}>Add Product</Button>
+                <Button className="w-full h-12 mt-4 shadow-xl" onClick={handleAddProduct}>Add to Shop</Button>
               </CardContent>
             </Card>
           </div>
@@ -277,8 +367,8 @@ export default function VendorDashboard() {
         <TabsContent value="profile" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle>Shop Details</CardTitle>
-              <CardDescription>Update how customers see your store.</CardDescription>
+              <CardTitle>Shop Front Details</CardTitle>
+              <CardDescription>Customize your shop's appearance in the marketplace.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {shopInfo && (
@@ -295,7 +385,7 @@ export default function VendorDashboard() {
                   </div>
                   <div className="space-y-2">
                     <Label className="flex justify-between items-center">
-                      Shop Description
+                      About Your Shop
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -303,25 +393,25 @@ export default function VendorDashboard() {
                         disabled={isGenerating}
                         className="text-[10px] text-primary hover:bg-primary/10"
                       >
-                        <Wand2 className="h-3 w-3 mr-1" /> Refresh with AI
+                        <Wand2 className="h-3 w-3 mr-1" /> Refresh AI Bio
                       </Button>
                     </Label>
                     <Textarea 
-                      className="min-h-[150px]" 
+                      className="min-h-[150px] text-sm leading-relaxed" 
                       value={shopInfo.description}
                       onChange={(e) => setShopInfo({...shopInfo, description: e.target.value})}
                     />
                   </div>
                 </>
               )}
-              <Button className="w-full" onClick={handleSaveShop}>Save Profile Changes</Button>
+              <Button className="w-full" onClick={handleSaveShop}>Save Changes</Button>
             </CardContent>
           </Card>
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle>Location & Contact</CardTitle>
-              <CardDescription>Help customers find and reach you.</CardDescription>
+              <CardTitle>Logistics & Availability</CardTitle>
+              <CardDescription>Manage your physical store presence.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                {shopInfo && (
@@ -336,7 +426,7 @@ export default function VendorDashboard() {
                   <div className="flex items-center gap-4">
                     <div className="bg-primary/10 p-2 rounded-full text-primary"><Clock className="h-5 w-5" /></div>
                     <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground">Opening Hours</Label>
+                      <Label className="text-xs text-muted-foreground">Operating Hours</Label>
                       <Input value={shopInfo.hours} onChange={(e) => setShopInfo({...shopInfo, hours: e.target.value})} />
                     </div>
                   </div>
@@ -344,7 +434,7 @@ export default function VendorDashboard() {
                     <div className="bg-primary/10 p-2 rounded-full text-primary"><Smartphone className="h-5 w-5" /></div>
                     <div className="flex-1">
                       <Label className="text-xs text-muted-foreground">Contact Phone</Label>
-                      <Input placeholder="+91 00000 00000" />
+                      <Input placeholder="+91 98765 43210" />
                     </div>
                   </div>
                 </div>
@@ -356,11 +446,15 @@ export default function VendorDashboard() {
         <TabsContent value="settings">
           <Card>
             <CardHeader>
-              <CardTitle>Vendor Settings</CardTitle>
-              <CardDescription>Manage your account and preferences.</CardDescription>
+              <CardTitle>Business Settings</CardTitle>
+              <CardDescription>Manage payouts and neighborhood notifications.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground italic">Payment integration and delivery region settings are being finalized.</p>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4 p-4 border rounded-xl bg-muted/20">
+                <AlertCircle className="h-5 w-5 text-amber-500" />
+                <p className="text-sm">Payment integration is in preview. Your earnings will be tracked and cleared weekly.</p>
+              </div>
+              <Button variant="outline">Connect Bank Account</Button>
             </CardContent>
           </Card>
         </TabsContent>

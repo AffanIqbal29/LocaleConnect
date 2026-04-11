@@ -1,4 +1,3 @@
-
 'use server';
 
 import { products, shops } from '@/lib/db';
@@ -24,6 +23,7 @@ export async function addProduct(data: Partial<Product>) {
     name: data.name || 'Untitled Product',
     description: data.description || '',
     price: data.price || 0,
+    discountPrice: data.discountPrice,
     category: data.category || 'General',
     imageUrl: data.imageUrl || 'https://picsum.photos/seed/newprod/400',
     stockQuantity: data.stockQuantity || 0,
@@ -34,7 +34,20 @@ export async function addProduct(data: Partial<Product>) {
   products.push(newProduct);
   revalidatePath('/products');
   revalidatePath('/vendor/dashboard');
+  revalidatePath('/');
   return newProduct;
+}
+
+export async function updateProduct(id: string, data: Partial<Product>) {
+  const index = products.findIndex(p => p.id === id);
+  if (index !== -1) {
+    products[index] = { ...products[index], ...data };
+    revalidatePath('/products');
+    revalidatePath('/vendor/dashboard');
+    revalidatePath('/');
+    return products[index];
+  }
+  return null;
 }
 
 export async function deleteProduct(id: string) {
@@ -43,6 +56,7 @@ export async function deleteProduct(id: string) {
     products.splice(index, 1);
     revalidatePath('/products');
     revalidatePath('/vendor/dashboard');
+    revalidatePath('/');
     return true;
   }
   return false;
