@@ -13,12 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const allProducts = [
-  { id: 'p1', name: "Handcrafted Ceramic Mug", shop: "Clay Creations", price: 24.0, category: "Home", image: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "" },
-  { id: 'p2', name: "Wildflower Honey", shop: "Bloom Bakery", price: 12.5, category: "Food", image: PlaceHolderImages.find(img => img.id === 'product-honey')?.imageUrl || "" },
-  { id: 'p3', name: "Artisan Coffee Blend", shop: "Steam & Bean", price: 18.0, category: "Food", image: PlaceHolderImages.find(img => img.id === 'product-coffee')?.imageUrl || "" },
-  { id: 'p4', name: "Sourdough Bread", shop: "Bloom Bakery", price: 8.0, category: "Food", image: PlaceHolderImages.find(img => img.id === 'bakery-shop')?.imageUrl || "" },
-  { id: 'p5', name: "Vintage Denim Jacket", shop: "The Velvet Hanger", price: 65.0, category: "Clothing", image: PlaceHolderImages.find(img => img.id === 'boutique-shop')?.imageUrl || "" },
-  { id: 'p6', name: "Silk Scarf", shop: "The Velvet Hanger", price: 32.0, category: "Clothing", image: "https://picsum.photos/seed/scarf/400" },
+  { id: 'p1', name: "Handcrafted Ceramic Mug", shop: "Clay Creations", price: 240.0, category: "Home", image: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "" },
+  { id: 'p2', name: "Wildflower Honey", shop: "Bloom Bakery", price: 125.5, category: "Food", image: PlaceHolderImages.find(img => img.id === 'product-honey')?.imageUrl || "" },
+  { id: 'p3', name: "Artisan Coffee Blend", shop: "Steam & Bean", price: 180.0, category: "Food", image: PlaceHolderImages.find(img => img.id === 'product-coffee')?.imageUrl || "" },
+  { id: 'p4', name: "Sourdough Bread", shop: "Bloom Bakery", price: 80.0, category: "Food", image: PlaceHolderImages.find(img => img.id === 'bakery-shop')?.imageUrl || "" },
+  { id: 'p5', name: "Vintage Denim Jacket", shop: "The Velvet Hanger", price: 650.0, category: "Clothing", image: PlaceHolderImages.find(img => img.id === 'boutique-shop')?.imageUrl || "" },
+  { id: 'p6', name: "Silk Scarf", shop: "The Velvet Hanger", price: 320.0, category: "Clothing", image: "https://picsum.photos/seed/scarf/400" },
 ];
 
 export default function ProductsPage() {
@@ -115,7 +115,7 @@ export default function ProductsPage() {
                 <h3 className="text-lg font-headline line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
               </div>
               <div className="flex items-center justify-between mt-auto pt-4 border-t border-muted/30">
-                <p className="text-2xl font-bold">${product.price.toFixed(2)}</p>
+                <p className="text-2xl font-bold">₹{product.price.toFixed(2)}</p>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary">
                    <ShoppingBag className="h-4 w-4" />
                 </Button>

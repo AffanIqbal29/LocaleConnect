@@ -96,7 +96,7 @@ export default function CartPage() {
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <p className="text-xl font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-xl font-semibold">₹{(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ export default function CartPage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                  <span className="font-medium">₹{totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Local Delivery</span>
@@ -121,7 +121,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Processing Fee</span>
-                  <span className="font-medium">$1.50</span>
+                  <span className="font-medium">₹15.00</span>
                 </div>
               </div>
               
@@ -129,7 +129,7 @@ export default function CartPage() {
               
               <div className="flex justify-between items-end">
                 <span className="text-lg font-semibold">Total</span>
-                <span className="text-3xl font-bold text-primary">${(totalPrice + 1.5).toFixed(2)}</span>
+                <span className="text-3xl font-bold text-primary">₹{(totalPrice + 15).toFixed(2)}</span>
               </div>
               
               <Button className="w-full h-14 text-lg font-medium shadow-xl">

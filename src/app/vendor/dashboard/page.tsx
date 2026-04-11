@@ -141,7 +141,7 @@ export default function VendorDashboard() {
                         </div>
                         <div>
                           <h4 className="font-semibold">Product Item #{i}</h4>
-                          <p className="text-sm text-muted-foreground">$12.00 • 15 in stock</p>
+                          <p className="text-sm text-muted-foreground">₹120.00 • 15 in stock</p>
                         </div>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -171,7 +171,7 @@ export default function VendorDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Price ($)</Label>
+                  <Label>Price (₹)</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -291,7 +291,7 @@ export default function VendorDashboard() {
                   <div className="bg-primary/10 p-2 rounded-full text-primary"><Smartphone className="h-5 w-5" /></div>
                   <div className="flex-1">
                     <Label className="text-xs text-muted-foreground">Contact Phone</Label>
-                    <Input placeholder="+1 (555) 000-0000" />
+                    <Input placeholder="+91 00000 00000" />
                   </div>
                 </div>
               </div>

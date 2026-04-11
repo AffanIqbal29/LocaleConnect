@@ -41,21 +41,21 @@ const trendingProducts = [
     id: 'p1',
     name: "Handcrafted Ceramic Mug",
     shop: "Clay Creations",
-    price: 24.00,
+    price: 240.00,
     image: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "",
   },
   {
     id: 'p2',
     name: "Wildflower Honey",
     shop: "Bloom Bakery",
-    price: 12.50,
+    price: 125.50,
     image: PlaceHolderImages.find(img => img.id === 'product-honey')?.imageUrl || "",
   },
   {
     id: 'p3',
     name: "Artisan Coffee Blend",
     shop: "Steam & Bean",
-    price: 18.00,
+    price: 180.00,
     image: PlaceHolderImages.find(img => img.id === 'product-coffee')?.imageUrl || "",
   }
 ];
@@ -198,7 +198,7 @@ export default function Home() {
               <CardContent className="p-6">
                 <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">{product.shop}</p>
                 <h3 className="text-xl font-headline mb-2">{product.name}</h3>
-                <p className="text-2xl font-semibold text-foreground">${product.price.toFixed(2)}</p>
+                <p className="text-2xl font-semibold text-foreground">₹{product.price.toFixed(2)}</p>
               </CardContent>
             </Card>
           ))}
