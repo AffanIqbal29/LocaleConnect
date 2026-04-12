@@ -8,7 +8,26 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag, Star, Eye, XCircle } from 'lucide-react';
+import { 
+  Search, 
+  SlidersHorizontal, 
+  ShoppingBag, 
+  Loader2, 
+  Tag, 
+  Star, 
+  Eye, 
+  XCircle,
+  ChevronDown
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { getProducts } from '@/app/actions/product-actions';
@@ -20,6 +39,7 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("newest");
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,9 +61,9 @@ export default function ProductsPage() {
   const categories = ["All", "Food", "Clothing", "Home", "Jewelry"];
 
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
+    let result = products.filter(p => {
       const shop = shops.find(s => s.id === p.shopId);
-      const categoryMatch = selectedCategory === "All" || p.category === selectedCategory;
+      const categoryMatch = selectedCategory === "All" || p.category.toLowerCase() === selectedCategory.toLowerCase();
       const searchLower = search.toLowerCase();
       const nameMatch = p.name.toLowerCase().includes(searchLower);
       const shopMatch = shop?.name.toLowerCase().includes(searchLower) ?? false;
@@ -51,7 +71,21 @@ export default function ProductsPage() {
 
       return categoryMatch && (nameMatch || shopMatch || categoryTextMatch);
     });
-  }, [products, search, selectedCategory]);
+
+    // Sorting logic
+    if (sortBy === "price-low") {
+      result.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
+    } else if (sortBy === "price-high") {
+      result.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
+    } else if (sortBy === "rating") {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else {
+      // Default to Newest
+      result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return result;
+  }, [products, search, selectedCategory, sortBy]);
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
@@ -77,6 +111,7 @@ export default function ProductsPage() {
   const clearFilters = () => {
     setSearch("");
     setSelectedCategory("All");
+    setSortBy("newest");
   };
 
   return (
@@ -105,21 +140,40 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide">
-        <Button variant="outline" size="sm" className="rounded-full gap-2">
-          <SlidersHorizontal className="h-4 w-4" /> Filters
-        </Button>
-        {categories.map(cat => (
-          <Button 
-            key={cat} 
-            variant={selectedCategory === cat ? "default" : "secondary"}
-            size="sm"
-            className="rounded-full px-6 transition-all"
-            onClick={() => setSelectedCategory(cat)}
-          >
-            {cat}
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
+        <div className="flex flex-wrap items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          {categories.map(cat => (
+            <Button 
+              key={cat} 
+              variant={selectedCategory === cat ? "default" : "secondary"}
+              size="sm"
+              className="rounded-full px-6 transition-all"
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="rounded-full gap-2">
+              <SlidersHorizontal className="h-4 w-4" /> 
+              Sort By
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
+              <DropdownMenuRadioItem value="newest">Newest Arrivals</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="price-low">Price: Low to High</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="price-high">Price: High to Low</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="rating">Top Rated</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {isLoading ? (
