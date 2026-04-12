@@ -28,6 +28,7 @@ export async function addProduct(data: Partial<Product>) {
     imageUrl: data.imageUrl || 'https://picsum.photos/seed/newprod/400',
     stockQuantity: data.stockQuantity || 0,
     isActive: true,
+    rating: 0, // Initialize new products with 0 rating
     createdAt: new Date(),
   };
   

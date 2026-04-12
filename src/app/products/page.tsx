@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag } from 'lucide-react';
+import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag, Star } from 'lucide-react';
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { getProducts } from '@/app/actions/product-actions';
@@ -145,7 +145,14 @@ export default function ProductsPage() {
                 </div>
                 <CardContent className="p-5 flex-grow flex flex-col justify-between">
                   <div>
-                    <p className="text-primary text-[10px] font-bold uppercase tracking-widest mb-1">{shop?.name || 'Local Shop'}</p>
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-primary text-[10px] font-bold uppercase tracking-widest">{shop?.name || 'Local Shop'}</p>
+                      {product.rating && (
+                        <div className="flex items-center text-amber-500 text-[10px] font-bold">
+                          <Star className="h-3 w-3 fill-current mr-0.5" /> {product.rating}
+                        </div>
+                      )}
+                    </div>
                     <h3 className="text-lg font-headline line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
                   </div>
                   <div className="flex flex-col mt-auto pt-4 border-t border-muted/30">

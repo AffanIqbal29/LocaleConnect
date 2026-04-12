@@ -68,6 +68,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-mug')?.imageUrl || "",
     stockQuantity: 12,
     isActive: true,
+    rating: 4.9,
     createdAt: new Date(),
   },
   {
@@ -80,6 +81,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-honey')?.imageUrl || "",
     stockQuantity: 25,
     isActive: true,
+    rating: 4.7,
     createdAt: new Date(),
   },
   {
@@ -92,6 +94,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-coffee')?.imageUrl || "",
     stockQuantity: 40,
     isActive: true,
+    rating: 4.8,
     createdAt: new Date(),
   },
   {
@@ -104,6 +107,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-bread')?.imageUrl || "",
     stockQuantity: 10,
     isActive: true,
+    rating: 4.9,
     createdAt: new Date(),
   },
   {
@@ -116,6 +120,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-jacket')?.imageUrl || "",
     stockQuantity: 1,
     isActive: true,
+    rating: 4.6,
     createdAt: new Date(),
   },
   {
@@ -129,6 +134,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-candle')?.imageUrl || "",
     stockQuantity: 15,
     isActive: true,
+    rating: 4.5,
     createdAt: new Date(),
   },
   {
@@ -141,6 +147,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-soap')?.imageUrl || "",
     stockQuantity: 30,
     isActive: true,
+    rating: 4.8,
     createdAt: new Date(),
   },
   {
@@ -153,6 +160,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-tote')?.imageUrl || "",
     stockQuantity: 20,
     isActive: true,
+    rating: 4.7,
     createdAt: new Date(),
   },
   {
@@ -166,6 +174,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-spoon')?.imageUrl || "",
     stockQuantity: 8,
     isActive: true,
+    rating: 5.0,
     createdAt: new Date(),
   },
   {
@@ -178,6 +187,7 @@ export let products: Product[] = [
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-scarf')?.imageUrl || "",
     stockQuantity: 5,
     isActive: true,
+    rating: 4.9,
     createdAt: new Date(),
   }
 ];

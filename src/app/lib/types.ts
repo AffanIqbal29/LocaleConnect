@@ -37,6 +37,7 @@ export interface Product {
   imageUrl: string;
   stockQuantity: number;
   isActive: boolean;
+  rating?: number;
   createdAt: Date;
 }
 
