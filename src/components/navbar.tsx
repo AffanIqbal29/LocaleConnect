@@ -1,10 +1,9 @@
-
 "use client";
 
 import Link from 'next/link';
 import { useCart } from './cart-provider';
 import { useAuth } from './auth-provider';
-import { ShoppingCart, User, Store, Search, Menu, LogOut, Settings } from 'lucide-react';
+import { ShoppingCart, User, Store, Search, Menu, LogOut, Settings, Package } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -83,6 +82,11 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/account" className="flex items-center gap-2 cursor-pointer">
                       <User className="h-4 w-4" /> My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders" className="flex items-center gap-2 cursor-pointer">
+                      <Package className="h-4 w-4" /> My Orders
                     </Link>
                   </DropdownMenuItem>
                   {profile?.role === 'vendor' && (

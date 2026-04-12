@@ -1,4 +1,4 @@
-import { Product, Shop, Review } from '@/app/lib/types';
+import { Product, Shop, Review, Order } from '@/app/lib/types';
 import { PlaceHolderImages } from './placeholder-images';
 
 /**
@@ -197,4 +197,29 @@ export let reviews: Review[] = [
   { id: 'r2', customerId: 'c2', shopId: 's4', rating: 4, comment: "Beautiful design, though a bit heavier than I expected.", createdAt: new Date() },
   { id: 'r3', customerId: 'c3', shopId: 's1', rating: 5, comment: "Best sourdough in the neighborhood. Still fresh after 3 days!", createdAt: new Date() },
   { id: 'r4', customerId: 'c4', shopId: 's3', rating: 5, comment: "The orchid scent is divine and not overpowering at all.", createdAt: new Date() },
+];
+
+export let orders: Order[] = [
+  {
+    id: 'ord1',
+    customerId: 'user123',
+    shopId: 's1',
+    status: 'completed',
+    totalAmount: 160.00,
+    items: [
+      { productId: 'p4', name: 'Sourdough Bread', price: 80.00, quantity: 2 }
+    ],
+    createdAt: new Date(Date.now() - 86400000 * 5)
+  },
+  {
+    id: 'ord2',
+    customerId: 'user123',
+    shopId: 's4',
+    status: 'processing',
+    totalAmount: 255.00,
+    items: [
+      { productId: 'p1', name: 'Handcrafted Ceramic Mug', price: 240.00, quantity: 1 }
+    ],
+    createdAt: new Date()
+  }
 ];
