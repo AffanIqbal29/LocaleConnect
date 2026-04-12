@@ -1,6 +1,6 @@
 'use server';
 
-import { products, shops } from '@/lib/db';
+import { products, reviews } from '@/lib/db';
 import { Product } from '@/app/lib/types';
 import { revalidatePath } from 'next/cache';
 
@@ -16,6 +16,10 @@ export async function getProductById(id: string) {
   return products.find(p => p.id === id);
 }
 
+export async function getReviewsByShopId(shopId: string) {
+  return reviews.filter(r => r.shopId === shopId);
+}
+
 export async function addProduct(data: Partial<Product>) {
   const newProduct: Product = {
     id: `p${Math.random().toString(36).substr(2, 9)}`,
@@ -28,7 +32,7 @@ export async function addProduct(data: Partial<Product>) {
     imageUrl: data.imageUrl || 'https://picsum.photos/seed/newprod/400',
     stockQuantity: data.stockQuantity || 0,
     isActive: true,
-    rating: 0, // Initialize new products with 0 rating
+    rating: 0,
     createdAt: new Date(),
   };
   

@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag, Star } from 'lucide-react';
+import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag, Star, Eye } from 'lucide-react';
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { getProducts } from '@/app/actions/product-actions';
@@ -39,7 +40,9 @@ export default function ProductsPage() {
     (p.name.toLowerCase().includes(search.toLowerCase()) || (shop?.name.toLowerCase().includes(search.toLowerCase()) || ""));
   });
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    e.stopPropagation();
     const shop = shops.find(s => s.id === product.shopId);
     const finalPrice = product.discountPrice || product.price;
     
@@ -105,74 +108,81 @@ export default function ProductsPage() {
             const hasDiscount = product.discountPrice && product.discountPrice < product.price;
             
             return (
-              <Card key={product.id} className="group border-none shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full">
-                <div className="relative aspect-[4/5] overflow-hidden">
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    <Badge className="bg-white/90 text-black hover:bg-white backdrop-blur-sm border-none shadow-sm">
-                      {product.category}
-                    </Badge>
-                    {hasDiscount && (
-                      <Badge className="bg-accent text-white border-none shadow-sm flex items-center gap-1">
-                        <Tag className="h-3 w-3" /> Sale
+              <Card key={product.id} className="group border-none shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full relative">
+                <Link href={`/products/${product.id}`} className="flex flex-col h-full">
+                  <div className="relative aspect-[4/5] overflow-hidden">
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 flex flex-col gap-2">
+                      <Badge className="bg-white/90 text-black hover:bg-white backdrop-blur-sm border-none shadow-sm">
+                        {product.category}
                       </Badge>
-                    )}
-                  </div>
-                  {product.stockQuantity < 5 && (
-                    <div className="absolute top-3 right-3">
-                       <Badge variant="destructive" className="h-5 text-[10px]">Only {product.stockQuantity} Left</Badge>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/5 group-hover:bg-black/20 transition-colors" />
-                  <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                    <Button 
-                      className="w-full h-11 bg-primary text-white shadow-xl"
-                      onClick={() => handleAddToCart(product)}
-                      disabled={product.stockQuantity <= 0}
-                    >
-                      {product.stockQuantity > 0 ? (
-                        <>Add to Cart <Plus className="ml-1 h-4 w-4" /></>
-                      ) : (
-                        "Out of Stock"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <CardContent className="p-5 flex-grow flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="text-primary text-[10px] font-bold uppercase tracking-widest">{shop?.name || 'Local Shop'}</p>
-                      {product.rating && (
-                        <div className="flex items-center text-amber-500 text-[10px] font-bold">
-                          <Star className="h-3 w-3 fill-current mr-0.5" /> {product.rating}
-                        </div>
+                      {hasDiscount && (
+                        <Badge className="bg-accent text-white border-none shadow-sm flex items-center gap-1">
+                          <Tag className="h-3 w-3" /> Sale
+                        </Badge>
                       )}
                     </div>
-                    <h3 className="text-lg font-headline line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
-                  </div>
-                  <div className="flex flex-col mt-auto pt-4 border-t border-muted/30">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        {hasDiscount ? (
-                          <>
-                            <p className="text-2xl font-bold text-accent">₹{product.discountPrice?.toFixed(2)}</p>
-                            <p className="text-sm text-muted-foreground line-through">₹{product.price.toFixed(2)}</p>
-                          </>
-                        ) : (
-                          <p className="text-2xl font-bold">₹{product.price.toFixed(2)}</p>
-                        )}
+                    {product.stockQuantity < 5 && (
+                      <div className="absolute top-3 right-3">
+                         <Badge variant="destructive" className="h-5 text-[10px]">Only {product.stockQuantity} Left</Badge>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary">
-                        <ShoppingBag className="h-4 w-4" />
+                    )}
+                    <div className="absolute inset-0 bg-black/5 group-hover:bg-black/20 transition-colors" />
+                    
+                    {/* Hover Actions */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-[2px]">
+                      <Button 
+                        className="w-[80%] h-11 bg-primary text-white shadow-xl font-bold"
+                        onClick={(e) => handleAddToCart(e, product)}
+                        disabled={product.stockQuantity <= 0}
+                      >
+                        {product.stockQuantity > 0 ? (
+                          <><ShoppingBag className="mr-2 h-4 w-4" /> Quick Add</>
+                        ) : (
+                          "Out of Stock"
+                        )}
+                      </Button>
+                      <Button variant="secondary" className="w-[80%] h-11 font-bold">
+                        <Eye className="mr-2 h-4 w-4" /> View Details
                       </Button>
                     </div>
                   </div>
-                </CardContent>
+                  <CardContent className="p-5 flex-grow flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-primary text-[10px] font-bold uppercase tracking-widest">{shop?.name || 'Local Shop'}</p>
+                        {product.rating && (
+                          <div className="flex items-center text-amber-500 text-[10px] font-bold">
+                            <Star className="h-3 w-3 fill-current mr-0.5" /> {product.rating}
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-headline line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
+                    </div>
+                    <div className="flex flex-col mt-auto pt-4 border-t border-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          {hasDiscount ? (
+                            <>
+                              <p className="text-2xl font-bold text-accent">₹{product.discountPrice?.toFixed(2)}</p>
+                              <p className="text-sm text-muted-foreground line-through">₹{product.price.toFixed(2)}</p>
+                            </>
+                          ) : (
+                            <p className="text-2xl font-bold">₹{product.price.toFixed(2)}</p>
+                          )}
+                        </div>
+                        <div className="h-8 w-8 rounded-full border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                          <Eye className="h-4 w-4" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
               </Card>
             );
           })}

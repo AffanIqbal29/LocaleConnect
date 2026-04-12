@@ -1,4 +1,4 @@
-import { Product, Shop } from '@/app/lib/types';
+import { Product, Shop, Review } from '@/app/lib/types';
 import { PlaceHolderImages } from './placeholder-images';
 
 /**
@@ -62,7 +62,7 @@ export let products: Product[] = [
     id: 'p1',
     shopId: 's4',
     name: "Handcrafted Ceramic Mug",
-    description: "A beautiful, hand-thrown ceramic mug with a unique glaze finish.",
+    description: "A beautiful, hand-thrown ceramic mug with a unique glaze finish. Perfect for your morning coffee or tea. Each piece is unique due to the artisanal firing process.",
     price: 240.00,
     category: "Home",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-mug')?.imageUrl || "",
@@ -75,7 +75,7 @@ export let products: Product[] = [
     id: 'p2',
     shopId: 's1',
     name: "Wildflower Honey",
-    description: "Pure, raw honey collected from local wildflowers in recycled glass jars.",
+    description: "Pure, raw honey collected from local wildflowers. Our honey is never pasteurized, preserving all the natural enzymes and local pollen benefits.",
     price: 125.50,
     category: "Food",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-honey')?.imageUrl || "",
@@ -88,7 +88,7 @@ export let products: Product[] = [
     id: 'p3',
     shopId: 's3',
     name: "Artisan Coffee Blend",
-    description: "Our signature medium roast blend with notes of chocolate and citrus.",
+    description: "Our signature medium roast blend with notes of chocolate and citrus. Beans are sourced ethically and roasted in small batches right here in town.",
     price: 180.00,
     category: "Food",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-coffee')?.imageUrl || "",
@@ -101,7 +101,7 @@ export let products: Product[] = [
     id: 'p4',
     shopId: 's1',
     name: "Sourdough Bread",
-    description: "Naturally leavened bread with a crisp crust and airy interior.",
+    description: "Naturally leavened bread with a crisp crust and airy interior. Made with a 50-year-old starter and high-quality organic flour.",
     price: 80.00,
     category: "Food",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-bread')?.imageUrl || "",
@@ -114,7 +114,7 @@ export let products: Product[] = [
     id: 'p5',
     shopId: 's2',
     name: "Vintage Denim Jacket",
-    description: "Classic vintage denim jacket, hand-selected for quality.",
+    description: "Classic vintage denim jacket, hand-selected for quality. A timeless piece that only gets better with age. Authentic distressing and heavy-duty hardware.",
     price: 650.00,
     category: "Clothing",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-jacket')?.imageUrl || "",
@@ -127,7 +127,7 @@ export let products: Product[] = [
     id: 'p6',
     shopId: 's3',
     name: "Sea Salt & Orchid Candle",
-    description: "Hand-poured soy candle with a refreshing coastal scent.",
+    description: "Hand-poured soy candle with a refreshing coastal scent. Lead-free cotton wicks and phthalate-free fragrance oils for a clean burn.",
     price: 320.00,
     discountPrice: 280.00,
     category: "Home",
@@ -141,7 +141,7 @@ export let products: Product[] = [
     id: 'p7',
     shopId: 's4',
     name: "Organic Goat Milk Soap",
-    description: "Gentle, moisturizing soap made with natural oils and fresh goat milk.",
+    description: "Gentle, moisturizing soap made with natural oils and fresh goat milk from local farms. Great for sensitive skin and daily use.",
     price: 110.00,
     category: "Home",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-soap')?.imageUrl || "",
@@ -154,7 +154,7 @@ export let products: Product[] = [
     id: 'p8',
     shopId: 's2',
     name: "Canvas Market Tote",
-    description: "Durable, hand-painted tote bag perfect for neighborhood shopping.",
+    description: "Durable, hand-painted tote bag perfect for neighborhood shopping. Reinforced handles and heavy-weight organic canvas.",
     price: 150.00,
     category: "Clothing",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-tote')?.imageUrl || "",
@@ -167,7 +167,7 @@ export let products: Product[] = [
     id: 'p9',
     shopId: 's4',
     name: "Hand-carved Salad Servers",
-    description: "Unique salad servers carved from reclaimed mango wood.",
+    description: "Unique salad servers carved from reclaimed mango wood. Treated with food-safe oils to highlight the natural wood grain.",
     price: 450.00,
     discountPrice: 399.00,
     category: "Home",
@@ -181,7 +181,7 @@ export let products: Product[] = [
     id: 'p10',
     shopId: 's2',
     name: "Hand-knitted Alpaca Scarf",
-    description: "Luxuriously soft scarf knitted by local artisans using pure alpaca wool.",
+    description: "Luxuriously soft scarf knitted by local artisans using pure alpaca wool. Incredibly warm and hypoallergenic.",
     price: 850.00,
     category: "Clothing",
     imageUrl: PlaceHolderImages.find(img => img.id === 'product-scarf')?.imageUrl || "",
@@ -190,4 +190,11 @@ export let products: Product[] = [
     rating: 4.9,
     createdAt: new Date(),
   }
+];
+
+export let reviews: Review[] = [
+  { id: 'r1', customerId: 'c1', shopId: 's4', rating: 5, comment: "Absolutely love the texture of this mug! It holds heat really well.", createdAt: new Date() },
+  { id: 'r2', customerId: 'c2', shopId: 's4', rating: 4, comment: "Beautiful design, though a bit heavier than I expected.", createdAt: new Date() },
+  { id: 'r3', customerId: 'c3', shopId: 's1', rating: 5, comment: "Best sourdough in the neighborhood. Still fresh after 3 days!", createdAt: new Date() },
+  { id: 'r4', customerId: 'c4', shopId: 's3', rating: 5, comment: "The orchid scent is divine and not overpowering at all.", createdAt: new Date() },
 ];

@@ -1,11 +1,10 @@
-
 "use client";
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, MapPin, Star, ShoppingBag } from 'lucide-react';
+import { ArrowRight, MapPin, Star, ShoppingBag, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -42,7 +41,7 @@ const trendingProducts = [
     name: "Handcrafted Ceramic Mug",
     shop: "Clay Creations",
     price: 240.00,
-    image: PlaceHolderImages.find(img => img.id === 'product-pottery')?.imageUrl || "",
+    image: PlaceHolderImages.find(img => img.id === 'product-mug')?.imageUrl || "",
   },
   {
     id: 'p2',
@@ -133,39 +132,14 @@ export default function Home() {
                 <div className="flex items-center text-muted-foreground text-sm">
                   <MapPin className="h-4 w-4 mr-1 text-primary" /> {shop.distance} from you
                 </div>
-                <Button variant="secondary" className="w-full mt-4 group">
-                  Visit Shop <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                <Link href={`/shops`}>
+                  <Button variant="secondary" className="w-full mt-4 group">
+                    Visit Shop <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ))}
-        </div>
-      </section>
-
-      {/* Why Choose LocaleConnect */}
-      <section className="bg-primary/5 py-20">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-          <div className="space-y-4">
-            <div className="h-16 w-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShoppingBag className="h-8 w-8" />
-            </div>
-            <h3 className="text-2xl font-headline">Support Local</h3>
-            <p className="text-muted-foreground">Keep your community thriving by supporting small businesses and local artisans directly.</p>
-          </div>
-          <div className="space-y-4">
-            <div className="h-16 w-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-6">
-              <MapPin className="h-8 w-8" />
-            </div>
-            <h3 className="text-2xl font-headline">Fast Delivery</h3>
-            <p className="text-muted-foreground">Get your items delivered within hours or pick them up from the store at your convenience.</p>
-          </div>
-          <div className="space-y-4">
-            <div className="h-16 w-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-6">
-              <Star className="h-8 w-8" />
-            </div>
-            <h3 className="text-2xl font-headline">Unique Finds</h3>
-            <p className="text-muted-foreground">Discover one-of-a-kind products that you won't find in big-box retail stores.</p>
-          </div>
         </div>
       </section>
 
@@ -183,24 +157,28 @@ export default function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {trendingProducts.map((product) => (
-            <Card key={product.id} className="group border-none shadow-md hover:shadow-xl transition-all duration-300">
-              <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <Button size="icon" className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ShoppingBag className="h-5 w-5" />
-                </Button>
-              </div>
-              <CardContent className="p-6">
-                <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">{product.shop}</p>
-                <h3 className="text-xl font-headline mb-2">{product.name}</h3>
-                <p className="text-2xl font-semibold text-foreground">₹{product.price.toFixed(2)}</p>
-              </CardContent>
-            </Card>
+            <Link href={`/products/${product.id}`} key={product.id}>
+              <Card className="group border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden h-full">
+                <div className="relative aspect-square overflow-hidden">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <Button variant="secondary" className="rounded-full h-12 w-12 p-0 shadow-lg">
+                      <Eye className="h-6 w-6" />
+                    </Button>
+                  </div>
+                </div>
+                <CardContent className="p-6">
+                  <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">{product.shop}</p>
+                  <h3 className="text-xl font-headline mb-2 line-clamp-1">{product.name}</h3>
+                  <p className="text-2xl font-semibold text-foreground">₹{product.price.toFixed(2)}</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>
