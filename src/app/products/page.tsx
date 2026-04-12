@@ -1,13 +1,14 @@
+
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag, Star, Eye } from 'lucide-react';
+import { Search, SlidersHorizontal, ShoppingBag, Plus, Loader2, Tag, Star, Eye, XCircle } from 'lucide-react';
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { getProducts } from '@/app/actions/product-actions';
@@ -25,20 +26,32 @@ export default function ProductsPage() {
   useEffect(() => {
     async function loadProducts() {
       setIsLoading(true);
-      const data = await getProducts();
-      setProducts(data);
-      setIsLoading(false);
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadProducts();
   }, []);
 
   const categories = ["All", "Food", "Clothing", "Home", "Jewelry"];
 
-  const filteredProducts = products.filter(p => {
-    const shop = shops.find(s => s.id === p.shopId);
-    return (selectedCategory === "All" || p.category === selectedCategory) &&
-    (p.name.toLowerCase().includes(search.toLowerCase()) || (shop?.name.toLowerCase().includes(search.toLowerCase()) || ""));
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const shop = shops.find(s => s.id === p.shopId);
+      const categoryMatch = selectedCategory === "All" || p.category === selectedCategory;
+      const searchLower = search.toLowerCase();
+      const nameMatch = p.name.toLowerCase().includes(searchLower);
+      const shopMatch = shop?.name.toLowerCase().includes(searchLower) ?? false;
+      const categoryTextMatch = p.category.toLowerCase().includes(searchLower);
+
+      return categoryMatch && (nameMatch || shopMatch || categoryTextMatch);
+    });
+  }, [products, search, selectedCategory]);
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
@@ -61,6 +74,11 @@ export default function ProductsPage() {
     });
   };
 
+  const clearFilters = () => {
+    setSearch("");
+    setSelectedCategory("All");
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
@@ -71,11 +89,19 @@ export default function ProductsPage() {
         <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input 
-            placeholder="Search products or shops..." 
+            placeholder="Search products, shops, or categories..." 
             className="pl-10 h-12 rounded-full border-primary/20 focus:ring-primary/20 shadow-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {search && (
+            <button 
+              onClick={() => setSearch("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+            >
+              <XCircle className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -88,7 +114,7 @@ export default function ProductsPage() {
             key={cat} 
             variant={selectedCategory === cat ? "default" : "secondary"}
             size="sm"
-            className="rounded-full px-6"
+            className="rounded-full px-6 transition-all"
             onClick={() => setSelectedCategory(cat)}
           >
             {cat}
@@ -102,98 +128,112 @@ export default function ProductsPage() {
           <p className="text-muted-foreground">Loading neighborhood treasures...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => {
-            const shop = shops.find(s => s.id === product.shopId);
-            const hasDiscount = product.discountPrice && product.discountPrice < product.price;
-            
-            return (
-              <Card key={product.id} className="group border-none shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full relative">
-                <Link href={`/products/${product.id}`} className="flex flex-col h-full">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 flex flex-col gap-2">
-                      <Badge className="bg-white/90 text-black hover:bg-white backdrop-blur-sm border-none shadow-sm">
-                        {product.category}
-                      </Badge>
-                      {hasDiscount && (
-                        <Badge className="bg-accent text-white border-none shadow-sm flex items-center gap-1">
-                          <Tag className="h-3 w-3" /> Sale
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredProducts.map((product) => {
+              const shop = shops.find(s => s.id === product.shopId);
+              const hasDiscount = product.discountPrice && product.discountPrice < product.price;
+              
+              return (
+                <Card key={product.id} className="group border-none shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full relative">
+                  <Link href={`/products/${product.id}`} className="flex flex-col h-full">
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 left-3 flex flex-col gap-2">
+                        <Badge className="bg-white/90 text-black hover:bg-white backdrop-blur-sm border-none shadow-sm">
+                          {product.category}
                         </Badge>
+                        {hasDiscount && (
+                          <Badge className="bg-accent text-white border-none shadow-sm flex items-center gap-1">
+                            <Tag className="h-3 w-3" /> Sale
+                          </Badge>
+                        )}
+                      </div>
+                      {product.stockQuantity < 5 && product.stockQuantity > 0 && (
+                        <div className="absolute top-3 right-3">
+                           <Badge variant="destructive" className="h-5 text-[10px]">Only {product.stockQuantity} Left</Badge>
+                        </div>
                       )}
-                    </div>
-                    {product.stockQuantity < 5 && (
-                      <div className="absolute top-3 right-3">
-                         <Badge variant="destructive" className="h-5 text-[10px]">Only {product.stockQuantity} Left</Badge>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/5 group-hover:bg-black/20 transition-colors" />
-                    
-                    {/* Hover Actions */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-[2px]">
-                      <Button 
-                        className="w-[80%] h-11 bg-primary text-white shadow-xl font-bold"
-                        onClick={(e) => handleAddToCart(e, product)}
-                        disabled={product.stockQuantity <= 0}
-                      >
-                        {product.stockQuantity > 0 ? (
-                          <><ShoppingBag className="mr-2 h-4 w-4" /> Quick Add</>
-                        ) : (
-                          "Out of Stock"
-                        )}
-                      </Button>
-                      <Button variant="secondary" className="w-[80%] h-11 font-bold">
-                        <Eye className="mr-2 h-4 w-4" /> View Details
-                      </Button>
-                    </div>
-                  </div>
-                  <CardContent className="p-5 flex-grow flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-1">
-                        <p className="text-primary text-[10px] font-bold uppercase tracking-widest">{shop?.name || 'Local Shop'}</p>
-                        {product.rating && (
-                          <div className="flex items-center text-amber-500 text-[10px] font-bold">
-                            <Star className="h-3 w-3 fill-current mr-0.5" /> {product.rating}
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="text-lg font-headline line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
-                    </div>
-                    <div className="flex flex-col mt-auto pt-4 border-t border-muted/30">
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                          {hasDiscount ? (
-                            <>
-                              <p className="text-2xl font-bold text-accent">₹{product.discountPrice?.toFixed(2)}</p>
-                              <p className="text-sm text-muted-foreground line-through">₹{product.price.toFixed(2)}</p>
-                            </>
+                      {product.stockQuantity === 0 && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                          <Badge variant="destructive" className="text-sm font-bold px-4 py-1">Out of Stock</Badge>
+                        </div>
+                      )}
+                      
+                      {/* Hover Actions */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-[2px]">
+                        <Button 
+                          className="w-[80%] h-11 bg-primary text-white shadow-xl font-bold"
+                          onClick={(e) => handleAddToCart(e, product)}
+                          disabled={product.stockQuantity <= 0}
+                        >
+                          {product.stockQuantity > 0 ? (
+                            <><ShoppingBag className="mr-2 h-4 w-4" /> Quick Add</>
                           ) : (
-                            <p className="text-2xl font-bold">₹{product.price.toFixed(2)}</p>
+                            "Notify Me"
+                          )}
+                        </Button>
+                        <Button variant="secondary" className="w-[80%] h-11 font-bold">
+                          <Eye className="mr-2 h-4 w-4" /> View Details
+                        </Button>
+                      </div>
+                    </div>
+                    <CardContent className="p-5 flex-grow flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-primary text-[10px] font-bold uppercase tracking-widest">{shop?.name || 'Local Shop'}</p>
+                          {product.rating !== undefined && (
+                            <div className="flex items-center text-amber-500 text-[10px] font-bold">
+                              <Star className="h-3 w-3 fill-current mr-0.5" /> {product.rating}
+                            </div>
                           )}
                         </div>
-                        <div className="h-8 w-8 rounded-full border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                          <Eye className="h-4 w-4" />
+                        <h3 className="text-lg font-headline line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
+                      </div>
+                      <div className="flex flex-col mt-auto pt-4 border-t border-muted/30">
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            {hasDiscount ? (
+                              <>
+                                <p className="text-2xl font-bold text-accent">₹{product.discountPrice?.toFixed(2)}</p>
+                                <p className="text-sm text-muted-foreground line-through">₹{product.price.toFixed(2)}</p>
+                              </>
+                            ) : (
+                              <p className="text-2xl font-bold">₹{product.price.toFixed(2)}</p>
+                            )}
+                          </div>
+                          <div className="h-8 w-8 rounded-full border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <Eye className="h-4 w-4" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Link>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    </CardContent>
+                  </Link>
+                </Card>
+              );
+            })}
+          </div>
 
-      {!isLoading && filteredProducts.length === 0 && (
-        <div className="py-24 text-center">
-          <p className="text-xl text-muted-foreground">No products found matching your search.</p>
-          <Button variant="link" onClick={() => {setSearch(""); setSelectedCategory("All");}}>Clear all filters</Button>
-        </div>
+          {filteredProducts.length === 0 && (
+            <div className="py-32 text-center space-y-4">
+              <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-2xl font-headline">No neighborhood treasures found</h3>
+              <p className="text-muted-foreground max-w-xs mx-auto text-sm">
+                We couldn't find any products matching your current filters. Try adjusting your search or category.
+              </p>
+              <Button variant="outline" onClick={clearFilters} className="mt-4 rounded-full">
+                Clear all filters
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
