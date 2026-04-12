@@ -21,11 +21,13 @@ import {
   Smartphone,
   Truck,
   ShieldCheck,
-  QrCode
+  QrCode,
+  Lock,
+  Shield
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type CheckoutStep = 'address' | 'payment' | 'review';
+type CheckoutStep = 'address' | 'payment' | 'review' | 'processing';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function CheckoutPage() {
   
   const [step, setStep] = useState<CheckoutStep>('address');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("Verifying payment details...");
   
   const [address, setAddress] = useState({
     fullName: user?.displayName || '',
@@ -87,12 +90,22 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    setStep('processing');
+    
+    // Step 1: Simulated Handshake
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setProcessingStatus("Authorizing transaction with bank...");
+    
+    // Step 2: Simulated Security Check
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setProcessingStatus("Performing security audit...");
+    
+    // Step 3: Confirmation
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({
       title: "Payment Successful",
-      description: "Your order has been confirmed with our local partners.",
+      description: "Transaction authorized in Sandbox Mode.",
     });
 
     clearCart();
@@ -104,9 +117,32 @@ export default function CheckoutPage() {
     return null;
   }
 
+  if (step === 'processing') {
+    return (
+      <div className="max-w-xl mx-auto px-6 py-32 text-center space-y-8">
+        <div className="relative h-24 w-24 mx-auto">
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse" />
+          <Loader2 className="h-24 w-24 text-primary animate-spin" />
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-3xl font-headline">{processingStatus}</h2>
+          <p className="text-muted-foreground">Please do not refresh the page or click back.</p>
+        </div>
+        <div className="bg-muted p-4 rounded-xl flex items-center justify-center gap-3 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+          <Lock className="h-4 w-4" /> Secure Sandbox Environment
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-headline mb-10">Checkout</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+        <h1 className="text-4xl font-headline">Checkout</h1>
+        <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 w-fit">
+          <Shield className="h-3 w-3" /> Sandbox Mode - No real charges
+        </div>
+      </div>
 
       {/* Progress Stepper */}
       <div className="flex items-center justify-between mb-12 max-w-2xl mx-auto">
@@ -327,7 +363,7 @@ export default function CheckoutPage() {
                 <div className="bg-primary/5 p-4 rounded-xl flex items-start gap-3">
                   <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Your payment information is encrypted and processed securely. LocaleConnect never stores your sensitive card data.
+                    Your payment information is encrypted and processed securely using simulated merchant accounts for prototyping.
                   </p>
                 </div>
 
@@ -397,9 +433,9 @@ export default function CheckoutPage() {
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
-                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...</>
+                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Finalizing...</>
                     ) : (
-                      "Confirm & Place Order"
+                      "Confirm & Pay Securely"
                     )}
                   </Button>
                 </div>
@@ -433,9 +469,9 @@ export default function CheckoutPage() {
                 <span className="font-bold">Total Payable</span>
                 <span className="text-3xl font-bold text-primary">₹{(totalPrice + 15).toFixed(2)}</span>
               </div>
-              <p className="text-[10px] text-center text-muted-foreground italic">
-                Inclusive of all neighborhood taxes and fees.
-              </p>
+              <div className="pt-4 flex items-center justify-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                 <ShieldCheck className="h-3 w-3" /> Secure Merchant Verification
+              </div>
             </CardContent>
           </Card>
         </div>
