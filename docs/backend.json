@@ -1,0 +1,704 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a customer account in LocaleConnect, used for browsing products, managing carts, and placing orders.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for communication and login. (Format: email)",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's phone number, primarily for contact regarding orders."
+        },
+        "defaultShippingAddressId": {
+          "type": "string",
+          "description": "Reference to the default shipping address for the user. (Relationship: User 1:N Address)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Address": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Address",
+      "type": "object",
+      "description": "Represents a physical address, used for user shipping and vendor locations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Address entity."
+        },
+        "street": {
+          "type": "string",
+          "description": "Street name and house number."
+        },
+        "city": {
+          "type": "string",
+          "description": "City of the address."
+        },
+        "state": {
+          "type": "string",
+          "description": "State or province of the address."
+        },
+        "zipCode": {
+          "type": "string",
+          "description": "Postal code of the address."
+        },
+        "country": {
+          "type": "string",
+          "description": "Country of the address."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Geographical latitude of the address, for location-based services."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Geographical longitude of the address, for location-based services."
+        },
+        "description": {
+          "type": "string",
+          "description": "A descriptive name for the address (e.g., 'Home', 'Work', 'Main Shop')."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User this address belongs to. Optional, as it might be a vendor's address. (Relationship: User 1:N Address)"
+        },
+        "vendorProfileId": {
+          "type": "string",
+          "description": "Reference to the VendorProfile this address belongs to. Optional, as it might be a user's address. (Relationship: VendorProfile 1:N Address)"
+        }
+      },
+      "required": [
+        "id",
+        "street",
+        "city",
+        "state",
+        "zipCode",
+        "country"
+      ]
+    },
+    "VendorProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VendorProfile",
+      "type": "object",
+      "description": "Detailed profile for a local shop, managed by a shop owner.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the VendorProfile entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the shop."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the shop, its offerings, and ethos."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL to the shop's logo image. (Format: uri)",
+          "format": "uri"
+        },
+        "bannerImageUrl": {
+          "type": "string",
+          "description": "URL to a banner image for the shop's profile page. (Format: uri)",
+          "format": "uri"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Contact phone number for the shop."
+        },
+        "email": {
+          "type": "string",
+          "description": "Contact email address for the shop. (Format: email)",
+          "format": "email"
+        },
+        "websiteUrl": {
+          "type": "string",
+          "description": "URL to the shop's external website. (Format: uri)",
+          "format": "uri"
+        },
+        "openingHours": {
+          "type": "string",
+          "description": "A string representing the shop's opening hours (e.g., 'Mon-Fri 9AM-5PM, Sat 10AM-2PM')."
+        },
+        "addressId": {
+          "type": "string",
+          "description": "Reference to the physical address of the shop. (Relationship: VendorProfile 1:1 Address)"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "description": "Reference to the User who owns and manages this vendor profile. (Relationship: User 1:N VendorProfile)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the vendor profile was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the vendor profile was last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "phoneNumber",
+        "email",
+        "addressId",
+        "ownerUserId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Defines product categories for organization and discovery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Category entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'Groceries', 'Handmade Crafts')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the category."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an icon or image representing the category. (Format: uri)",
+          "format": "uri"
+        },
+        "parentCategoryId": {
+          "type": "string",
+          "description": "Reference to a parent category for hierarchical organization. (Relationship: Category 1:N Category)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Details about a specific product offered by a vendor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Product entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the product, potentially AI-generated."
+        },
+        "price": {
+          "type": "number",
+          "description": "The current selling price of the product."
+        },
+        "inventoryCount": {
+          "type": "number",
+          "description": "The number of units of this product currently in stock."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "An array of URLs to images of the product. (Format: uri)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vendorProfileId": {
+          "type": "string",
+          "description": "Reference to the VendorProfile that sells this product. (Relationship: VendorProfile 1:N Product)"
+        },
+        "categoryIds": {
+          "type": "array",
+          "description": "References to Categories this product belongs to. (Relationship: Product N:N Category)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "weight": {
+          "type": "number",
+          "description": "The weight of the product, useful for shipping or bulk calculations."
+        },
+        "dimensions": {
+          "type": "string",
+          "description": "The dimensions of the product (e.g., '10x5x2 cm')."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates if the product is currently available for purchase."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the product was added. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the product details were last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price",
+        "inventoryCount",
+        "imageUrls",
+        "vendorProfileId",
+        "categoryIds",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Cart": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Cart",
+      "type": "object",
+      "description": "Represents a user's current shopping cart, holding products from various vendors.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Cart entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this cart. (Relationship: User 1:1 Cart)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the cart (e.g., 'active', 'abandoned', 'completed')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the cart was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the cart was last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CartItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CartItem",
+      "type": "object",
+      "description": "Represents an individual product added to a user's shopping cart.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CartItem entity."
+        },
+        "cartId": {
+          "type": "string",
+          "description": "Reference to the Cart this item belongs to. (Relationship: Cart 1:N CartItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product added to the cart. (Relationship: Product 1:N CartItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product in the cart."
+        },
+        "priceAtTimeOfAddition": {
+          "type": "number",
+          "description": "The price of the product at the moment it was added to the cart, to prevent price change issues."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the item was added to the cart. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the cart item was last updated (e.g., quantity changed). (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "cartId",
+        "productId",
+        "quantity",
+        "priceAtTimeOfAddition",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a completed purchase by a user, potentially containing items from multiple vendors.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Order entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who placed the order. (Relationship: User 1:N Order)"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total monetary amount of the order, including all items and any taxes/fees."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current fulfillment status of the order (e.g., 'pending', 'confirmed', 'processing', 'ready for pickup', 'shipped', 'delivered', 'cancelled')."
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Timestamp when the order was placed. (Format: date-time)",
+          "format": "date-time"
+        },
+        "fulfillmentMethod": {
+          "type": "string",
+          "description": "Method of receiving the order, either 'pickup' or 'delivery'."
+        },
+        "shippingAddressId": {
+          "type": "string",
+          "description": "Reference to the Address for delivery, if applicable. (Relationship: Order 1:1 Address)"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or instructions provided by the customer for the order."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the order record was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the order record was last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "totalAmount",
+        "status",
+        "orderDate",
+        "fulfillmentMethod",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents an individual product within a placed order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the OrderItem entity."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to the Order this item belongs to. (Relationship: Order 1:N OrderItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product that was ordered. (Relationship: Product 1:N OrderItem)"
+        },
+        "vendorProfileId": {
+          "type": "string",
+          "description": "Reference to the VendorProfile that supplied this product in the order, denormalized for easier tracking. (Relationship: VendorProfile 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product ordered."
+        },
+        "pricePerUnit": {
+          "type": "number",
+          "description": "The price of a single unit of the product at the time the order was placed."
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "The subtotal for this specific order item (quantity * pricePerUnit)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the order item record was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the order item record was last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "productId",
+        "vendorProfileId",
+        "quantity",
+        "pricePerUnit",
+        "subtotal",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores individual user profiles. Access is restricted to the authenticated user matching the {userId} in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching request.auth.uid."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": {
+            "$ref": "#/backend/entities/Address"
+          },
+          "description": "Stores addresses specifically owned by a user (e.g., shipping addresses). Each document will contain a 'userId' field matching the path. This ensures authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this address, matching request.auth.uid."
+            },
+            {
+              "name": "addressId",
+              "description": "The unique identifier for the specific address."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/cart",
+        "definition": {
+          "entityName": "Cart",
+          "schema": {
+            "$ref": "#/backend/entities/Cart"
+          },
+          "description": "Stores the user's active shopping cart (1:1 relationship). Access is restricted to the authenticated user matching the {userId} in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this cart, matching request.auth.uid."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/cart/cartItems/{cartItemId}",
+        "definition": {
+          "entityName": "CartItem",
+          "schema": {
+            "$ref": "#/backend/entities/CartItem"
+          },
+          "description": "Stores individual items within a user's shopping cart. Each document includes denormalized 'userId' (from the parent Cart) for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this cart item, matching request.auth.uid."
+            },
+            {
+              "name": "cartItemId",
+              "description": "The unique identifier for the specific cart item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores orders placed by a user. Access is restricted to the authenticated user matching the {userId} in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who placed this order, matching request.auth.uid."
+            },
+            {
+              "name": "orderId",
+              "description": "The unique identifier for the specific order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}/orderItems/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "Stores individual items within a user's placed order. Each document includes denormalized 'userId' (from the parent Order) for authorization independence. Also includes 'vendorProfileId' for vendor-side queries via collection group rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this order item, matching request.auth.uid."
+            },
+            {
+              "name": "orderId",
+              "description": "The unique identifier for the parent order."
+            },
+            {
+              "name": "orderItemId",
+              "description": "The unique identifier for the specific order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vendorProfiles/{vendorProfileId}",
+        "definition": {
+          "entityName": "VendorProfile",
+          "schema": {
+            "$ref": "#/backend/entities/VendorProfile"
+          },
+          "description": "Stores detailed profiles for local shops. Publicly readable for discovery; write access is restricted to the 'ownerUserId' stored within the document itself, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "vendorProfileId",
+              "description": "The unique identifier for the vendor profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vendorProfiles/{vendorProfileId}/address",
+        "definition": {
+          "entityName": "Address",
+          "schema": {
+            "$ref": "#/backend/entities/Address"
+          },
+          "description": "Stores the primary physical address for a vendor profile (1:1 relationship). Includes denormalized 'vendorOwnerUserId' (from the parent VendorProfile) for authorization independence.",
+          "params": [
+            {
+              "name": "vendorProfileId",
+              "description": "The unique identifier of the vendor profile this address belongs to."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vendorProfiles/{vendorProfileId}/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores products offered by a specific vendor. Publicly readable if 'isActive' is true; write access is restricted to the 'ownerUserId' (denormalized from the parent VendorProfile) for authorization independence.",
+          "params": [
+            {
+              "name": "vendorProfileId",
+              "description": "The unique identifier of the vendor profile that sells this product."
+            },
+            {
+              "name": "productId",
+              "description": "The unique identifier for the specific product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores global product categories. These are publicly readable for product discovery and typically managed by administrative backend processes.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the product category."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for LocaleConnect is designed with a strong emphasis on Authorization Independence, Structural Segregation, and predictable access patterns to ensure robust security and efficient queries. The core strategy revolves around creating clear ownership hierarchies and denormalizing critical authorization fields to eliminate the need for `get()` calls in security rules.\n\n**Authorization Independence (CRITICAL):**\nTo avoid complex and insecure `get()` operations, denormalization is applied where a subcollection's access depends on a parent's attributes. For example:\n*   **Products:** A `Product` document (`/vendorProfiles/{vendorProfileId}/products/{productId}`) will include the `ownerUserId` denormalized from its parent `VendorProfile`. This means security rules can directly check `request.auth.uid == resource.data.ownerUserId` for write access, and `request.auth.uid != null && resource.data.isActive == true` for read access, without fetching the `VendorProfile` document.\n*   **Addresses (Vendor-owned):** The singular `address` document for a vendor (`/vendorProfiles/{vendorProfileId}/address`) will also include `vendorOwnerUserId` for direct access control.\n*   **Cart Items:** A `CartItem` (`/users/{userId}/cart/cartItems/{cartItemId}`) will store the `userId` denormalized from its parent `Cart`. This allows rules to verify `request.auth.uid == resource.data.userId` for direct access to cart items.\n*   **Order Items:** Similarly, an `OrderItem` (`/users/{userId}/orders/{orderId}/orderItems/{orderItemId}`) will include the `userId` denormalized from its parent `Order` for secure user access.\nThis strategy ensures that security rules are atomic, simple to write, and highly performant, as they operate solely on the document being accessed or its immediate path context.\n\n**QAPs (Query as a Principle):**\nThe structure supports secure `list` operations (QAPs) by ensuring that queryable authorization fields are either part of the path or denormalized into the documents themselves, and by segregating data with different security postures:\n*   **User Data:** All user-specific data (`addresses`, `cart`, `orders`) is nested under `/users/{userId}`. This path-based ownership allows users to query (`list`) all their own data using simple rules like `match /users/{userId=**} { allow read, write: if request.auth.uid == userId; }`.\n*   **Vendor Profiles:** `/vendorProfiles/{vendorProfileId}` allows public read access for discovery and listing by all users. Write access is restricted to the `ownerUserId` stored within the `VendorProfile` document itself, enabling efficient queries for vendors to retrieve and manage their own profiles.\n*   **Products:** Nested under vendor profiles (`/vendorProfiles/{vendorProfileId}/products/{productId}`). Public users can query and `list` products that are `isActive == true`. Vendor owners can query and `list` all their products using `where('ownerUserId', '==', request.auth.uid)`, leveraging the denormalized `ownerUserId`.\n*   **Categories:** Stored in a top-level `/categories` collection, they are globally readable and managed by backend processes or administrative users (not explicitly covered by these rules but assumed). This segregation allows for easy public listing of categories.\n\n**Structural Segregation:**\n*   **User Private Data:** Dedicated paths like `/users/{userId}/addresses`, `/users/{userId}/cart`, `/users/{userId}/orders` ensure that user-specific, private information is isolated and secured at the highest level by the user's UID.\n*   **Vendor-Owned Data:** `/vendorProfiles/{vendorProfileId}/products` and `/vendorProfiles/{vendorProfileId}/address` ensures that vendor-managed entities are clearly tied to their respective vendor profiles and their owners, separating them from global public data.\n*   **Global Public Data:** `/categories` houses data that is universally accessible to all users, simplifying global browse/discovery queries."
+  }
+}
