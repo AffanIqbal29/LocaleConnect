@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 import { UserProfile, UserRole } from '@/app/lib/types';
 
 type AuthContextType = {
@@ -16,22 +16,24 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = useFirebaseAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) return;
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       
       if (firebaseUser) {
-        // In a real app, you'd fetch the profile from Firestore here
-        // For this prototype, we'll mock the profile based on the user
+        const mockRole = localStorage.getItem(`role_${firebaseUser.uid}`) as UserRole;
         const mockProfile: UserProfile = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || 'User',
-          role: (localStorage.getItem(`role_${firebaseUser.uid}`) as UserRole) || 'customer',
+          role: mockRole || 'customer',
           createdAt: new Date(),
         };
         setProfile(mockProfile);
@@ -42,10 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   const logout = async () => {
-    await signOut(auth);
+    if (auth) await signOut(auth);
   };
 
   return (
@@ -57,6 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import { UserRole } from '@/app/lib/types';
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useFirebaseAuth();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<UserRole>('customer');
   const [formData, setFormData] = useState({
@@ -28,12 +29,13 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
+
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       await updateProfile(userCredential.user, { displayName: formData.name });
       
-      // Store role in localStorage for this prototype (would be Firestore in prod)
       localStorage.setItem(`role_${userCredential.user.uid}`, role);
       
       toast({ 
