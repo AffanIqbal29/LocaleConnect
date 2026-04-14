@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -30,39 +30,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
-import { getProducts } from '@/app/actions/product-actions';
-import { Product } from '@/app/lib/types';
-import { shops } from '@/lib/db';
+import { Product, Shop } from '@/app/lib/types';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { query, collectionGroup, where, collection } from 'firebase/firestore';
 
 export default function ProductsPage() {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const db = useFirestore();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadProducts() {
-      setIsLoading(true);
-      try {
-        const data = await getProducts();
-        setProducts(data);
-      } catch (error) {
-        console.error("Failed to load products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadProducts();
-  }, []);
+  // Fetch Products using real-time hook
+  const productsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collectionGroup(db, 'products'), where('isActive', '==', true));
+  }, [db]);
+  const { data: products, isLoading: productsLoading } = useCollection<Product>(productsQuery);
+
+  // Fetch Shops using real-time hook
+  const shopsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, 'vendorProfiles');
+  }, [db]);
+  const { data: shops, isLoading: shopsLoading } = useCollection<Shop>(shopsQuery);
 
   const categories = ["All", "Food", "Clothing", "Home", "Jewelry"];
 
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
     let result = products.filter(p => {
-      const shop = shops.find(s => s.id === p.shopId);
+      const shop = shops?.find(s => s.id === p.shopId);
       const categoryMatch = selectedCategory === "All" || p.category.toLowerCase() === selectedCategory.toLowerCase();
       const searchLower = search.toLowerCase();
       const nameMatch = p.name.toLowerCase().includes(searchLower);
@@ -81,16 +81,20 @@ export default function ProductsPage() {
       result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else {
       // Default to Newest
-      result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      result.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as any)?.toDate?.() || new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as any)?.toDate?.() || new Date(b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
     }
 
     return result;
-  }, [products, search, selectedCategory, sortBy]);
+  }, [products, shops, search, selectedCategory, sortBy]);
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
     e.stopPropagation();
-    const shop = shops.find(s => s.id === product.shopId);
+    const shop = shops?.find(s => s.id === product.shopId);
     const finalPrice = product.discountPrice || product.price;
     
     addToCart({
@@ -113,6 +117,8 @@ export default function ProductsPage() {
     setSelectedCategory("All");
     setSortBy("newest");
   };
+
+  const isLoading = productsLoading || shopsLoading;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -185,7 +191,7 @@ export default function ProductsPage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredProducts.map((product) => {
-              const shop = shops.find(s => s.id === product.shopId);
+              const shop = shops?.find(s => s.id === product.shopId);
               const hasDiscount = product.discountPrice && product.discountPrice < product.price;
               
               return (
