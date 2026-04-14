@@ -1,5 +1,4 @@
-
-'use server';
+'use client';
 
 import { 
   collection, 
@@ -15,24 +14,20 @@ import {
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { Product, Review } from '@/app/lib/types';
-import { revalidatePath } from 'next/cache';
 
 /**
- * @fileOverview Server Actions for Product management using Firestore.
+ * @fileOverview Client-side utilities for Product management using Firestore.
  */
 
 const { firestore } = initializeFirebase();
 
 export async function getProducts() {
-  // We use collectionGroup to get products across all vendor profiles
   const productsQuery = query(collectionGroup(firestore, 'products'), where('isActive', '==', true));
   const snapshot = await getDocs(productsQuery);
   return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
 }
 
 export async function getProductById(id: string) {
-  // Since products are nested, we might need to search via collectionGroup or have the vendorId
-  // For simplicity in this prototype, we'll use a collectionGroup query
   const productsQuery = query(collectionGroup(firestore, 'products'), where('id', '==', id));
   const snapshot = await getDocs(productsQuery);
   if (snapshot.empty) return null;
@@ -40,7 +35,6 @@ export async function getProductById(id: string) {
 }
 
 export async function getReviewsByShopId(shopId: string) {
-  // Reviews are stored in a top-level collection in this implementation
   const reviewsRef = collection(firestore, 'reviews');
   const q = query(reviewsRef, where('shopId', '==', shopId));
   const snapshot = await getDocs(q);
@@ -69,36 +63,21 @@ export async function addProduct(data: Partial<Product>) {
   };
   
   await setDoc(productRef, newProduct);
-  
-  revalidatePath('/products');
-  revalidatePath('/vendor/dashboard');
-  revalidatePath('/');
   return newProduct;
 }
 
 export async function updateProduct(id: string, data: Partial<Product>) {
-  // In a real app, we'd know the shopId/vendorProfileId. 
-  // For the prototype dashboard, we assume shop 's1'
   const shopId = data.shopId || 's1';
   const productRef = doc(firestore, 'vendorProfiles', shopId, 'products', id);
   
   await updateDoc(productRef, data);
-  
-  revalidatePath('/products');
-  revalidatePath('/vendor/dashboard');
-  revalidatePath('/');
   
   const updated = await getDoc(productRef);
   return updated.exists() ? { ...updated.data(), id: updated.id } as Product : null;
 }
 
 export async function deleteProduct(id: string) {
-  // Assuming shop 's1' for dashboard actions
   const productRef = doc(firestore, 'vendorProfiles', 's1', 'products', id);
   await deleteDoc(productRef);
-  
-  revalidatePath('/products');
-  revalidatePath('/vendor/dashboard');
-  revalidatePath('/');
   return true;
 }

@@ -1,20 +1,17 @@
-
-'use server';
+'use client';
 
 import { 
   collection, 
   getDocs, 
   getDoc, 
   doc, 
-  query, 
-  where,
   addDoc
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { Order } from '@/app/lib/types';
 
 /**
- * @fileOverview Server Actions for Order management using Firestore.
+ * @fileOverview Client-side utilities for Order management using Firestore.
  */
 
 const { firestore } = initializeFirebase();
@@ -25,7 +22,6 @@ export async function getOrdersByCustomerId(customerId: string) {
   
   const orders = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order));
   
-  // Enhance with shop names
   const enhancedOrders = await Promise.all(orders.map(async (order) => {
     const shopRef = doc(firestore, 'vendorProfiles', order.shopId);
     const shopSnap = await getDoc(shopRef);

@@ -1,5 +1,4 @@
-
-'use server';
+'use client';
 
 import { 
   collection, 
@@ -10,10 +9,9 @@ import {
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { Shop } from '@/app/lib/types';
-import { revalidatePath } from 'next/cache';
 
 /**
- * @fileOverview Server Actions for Shop management using Firestore.
+ * @fileOverview Client-side utilities for Shop management using Firestore.
  */
 
 const { firestore } = initializeFirebase();
@@ -34,9 +32,6 @@ export async function getShopById(id: string) {
 export async function updateShopProfile(id: string, data: Partial<Shop>) {
   const shopRef = doc(firestore, 'vendorProfiles', id);
   await updateDoc(shopRef, data);
-  
-  revalidatePath('/shops');
-  revalidatePath('/vendor/dashboard');
   
   const updated = await getDoc(shopRef);
   return updated.exists() ? { ...updated.data(), id: updated.id } as Shop : null;
