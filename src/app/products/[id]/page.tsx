@@ -46,19 +46,24 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     async function loadData() {
       if (!db) return;
       setIsLoading(true);
-      const prod = await getProductById(db, id);
-      if (prod) {
-        setProduct(prod);
-        const [shopData, reviewsData, allProducts] = await Promise.all([
-          getShopById(db, prod.shopId),
-          getReviewsByShopId(db, prod.shopId),
-          getProducts(db)
-        ]);
-        setShop(shopData || null);
-        setReviews(reviewsData);
-        setSimilarProducts(allProducts.filter(p => p.category === prod.category && p.id !== prod.id).slice(0, 4));
+      try {
+        const prod = await getProductById(db, id);
+        if (prod) {
+          setProduct(prod);
+          const [shopData, reviewsData, allProducts] = await Promise.all([
+            getShopById(db, prod.shopId),
+            getReviewsByShopId(db, prod.shopId),
+            getProducts(db)
+          ]);
+          setShop(shopData || null);
+          setReviews(reviewsData);
+          setSimilarProducts(allProducts.filter(p => p.category === prod.category && p.id !== prod.id).slice(0, 4));
+        }
+      } catch (err) {
+        console.error("Error loading product detail:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     loadData();
   }, [id, db]);
@@ -78,6 +83,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       title: "Added to cart!",
       description: `${quantity} x ${product.name} added.`
     });
+  };
+
+  const parseDate = (dateVal: any) => {
+    if (!dateVal) return new Date();
+    if (dateVal instanceof Date) return dateVal;
+    if (typeof dateVal.toDate === 'function') return dateVal.toDate();
+    return new Date(dateVal);
   };
 
   if (isLoading) {
@@ -262,7 +274,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       ))}
                     </div>
                     <p className="font-semibold">Local Neighbor</p>
-                    <p className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground">{parseDate(review.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <p className="text-muted-foreground italic leading-relaxed">"{review.comment}"</p>

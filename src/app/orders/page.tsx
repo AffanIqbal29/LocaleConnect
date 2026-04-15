@@ -35,9 +35,14 @@ export default function MyOrdersPage() {
     async function loadOrders() {
       if (user && db) {
         setIsLoading(true);
-        const data = await getOrdersByCustomerId(db, user.uid);
-        setOrders(data as OrderWithShop[]);
-        setIsLoading(false);
+        try {
+          const data = await getOrdersByCustomerId(db, user.uid);
+          setOrders(data as OrderWithShop[]);
+        } catch (error) {
+          console.error("Failed to load orders:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     }
     loadOrders();
@@ -59,6 +64,14 @@ export default function MyOrdersPage() {
       case 'pending': return 'bg-blue-100 text-blue-700 border-blue-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
+  };
+
+  // Helper to handle Firestore Timestamps or JS Dates
+  const parseDate = (dateVal: any) => {
+    if (!dateVal) return new Date();
+    if (dateVal instanceof Date) return dateVal;
+    if (typeof dateVal.toDate === 'function') return dateVal.toDate();
+    return new Date(dateVal);
   };
 
   if (isLoading && !orders.length) {
@@ -101,74 +114,78 @@ export default function MyOrdersPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((order) => (
-            <Card key={order.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border-none">
-              <div className="bg-muted/30 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-6">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Order Date</p>
-                    <p className="text-sm font-semibold">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+          {orders.sort((a, b) => parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime()).map((order) => {
+            const displayDate = parseDate(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' });
+            
+            return (
+              <Card key={order.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border-none">
+                <div className="bg-muted/30 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Order Date</p>
+                      <p className="text-sm font-semibold">{displayDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Total</p>
+                      <p className="text-sm font-bold text-primary">₹{order.totalAmount.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Order #</p>
+                      <p className="text-sm font-mono text-muted-foreground uppercase">{order.id}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Total</p>
-                    <p className="text-sm font-bold text-primary">₹{order.totalAmount.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Order #</p>
-                    <p className="text-sm font-mono text-muted-foreground uppercase">{order.id}</p>
-                  </div>
+                  <Badge className={`${getStatusColor(order.status)} border px-3 py-1 flex items-center gap-2 capitalize`}>
+                    {getStatusIcon(order.status)} {order.status}
+                  </Badge>
                 </div>
-                <Badge className={`${getStatusColor(order.status)} border px-3 py-1 flex items-center gap-2 capitalize`}>
-                  {getStatusIcon(order.status)} {order.status}
-                </Badge>
-              </div>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="md:col-span-2 space-y-4">
-                    <div className="flex items-center gap-2 text-primary">
-                      <Store className="h-4 w-4" />
-                      <span className="text-xs font-bold uppercase tracking-widest">{order.shopName}</span>
-                    </div>
-                    <div className="space-y-3">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center group">
-                          <div className="flex items-center gap-3">
-                            <span className="h-8 w-8 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                              {item.quantity}x
-                            </span>
-                            <span className="font-medium text-sm">{item.name}</span>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-4">
+                      <div className="flex items-center gap-2 text-primary">
+                        <Store className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">{order.shopName}</span>
+                      </div>
+                      <div className="space-y-3">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center group">
+                            <div className="flex items-center gap-3">
+                              <span className="h-8 w-8 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                {item.quantity}x
+                              </span>
+                              <span className="font-medium text-sm">{item.name}</span>
+                            </div>
+                            <span className="text-sm font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
                           </div>
-                          <span className="text-sm font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-                      <h4 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Truck className="h-3 w-3" /> Delivery Detail
-                      </h4>
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-primary mt-0.5" />
-                          <p className="text-xs text-muted-foreground">Standard Local Delivery</p>
-                        </div>
-                        <Separator className="bg-primary/10" />
-                        <p className="text-[10px] leading-relaxed italic text-muted-foreground/80">
-                          {order.status === 'completed' 
-                            ? "This order was delivered by a neighborhood partner." 
-                            : "Your neighbor partner is currently preparing your unique treasures for local transit."}
-                        </p>
+                        ))}
                       </div>
                     </div>
-                    <Button variant="ghost" className="w-full justify-between text-xs font-bold group" size="sm">
-                      View Order Receipt <ChevronRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                    <div className="space-y-4">
+                      <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                        <h4 className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <Truck className="h-3 w-3" /> Delivery Detail
+                        </h4>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-primary mt-0.5" />
+                            <p className="text-xs text-muted-foreground">Standard Local Delivery</p>
+                          </div>
+                          <Separator className="bg-primary/10" />
+                          <p className="text-[10px] leading-relaxed italic text-muted-foreground/80">
+                            {order.status === 'completed' 
+                              ? "This order was delivered by a neighborhood partner." 
+                              : "Your neighbor partner is currently preparing your unique treasures for local transit."}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" className="w-full justify-between text-xs font-bold group" size="sm">
+                        View Order Receipt <ChevronRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

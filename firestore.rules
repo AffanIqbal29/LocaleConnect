@@ -6,30 +6,6 @@
  * personal addresses) is strictly isolated under a path-based ownership hierarchy. Vendor-related 
  * data (profiles, shop addresses, and products) is publicly discoverable but managed via a 
  * resource-ownership model.
- *
- * Data Structure:
- * 1. /users/{userId}: Hierarchical root for all private customer data.
- * 2. /vendorProfiles/{vendorProfileId}: Top-level collection for shop discovery.
- * 3. /categories/{categoryId}: Read-only global catalog for organization.
- *
- * Key Security Decisions:
- * - Path-based authorization is used for all user-specific collections to provide high-performance 
- *   listing and access control.
- * - Denormalized authorization fields (ownerUserId, userId) are strictly enforced on creation 
- *   and made immutable on update. This ensures that every document is self-describing for 
- *   security purposes, avoiding costly get() calls.
- * - Product visibility is public to allow for discovery, while modification is strictly limited 
- *   to the verified vendor owner.
- * - Administrative collections like Categories are read-only for client-side applications.
- *
- * Denormalization for Authorization:
- * To optimize performance, we denormalize 'userId' into cart items, addresses, and orders, and 
- * 'ownerUserId' into vendor profiles and products. Rules validate that these fields correctly 
- * link to the authenticated user during creation and never change thereafter.
- *
- * Structural Segregation:
- * Private user data is separated from public vendor data by top-level collection paths. This prevents 
- * accidental data exposure and simplifies the security logic for listing operations.
  */
 
 rules_version = '2';
@@ -38,166 +14,75 @@ service cloud.firestore {
 
     // --- Helper Functions ---
 
-    /** @description Checks if the user is authenticated with a valid UID. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user matches the specified userId from the path. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the existing document belongs to the specified owner ID. */
     function isResourceOwner(ownerId) {
       return isSignedIn() && request.auth.uid == ownerId;
     }
 
-    /** @description Checks if the document exists and the current user is the owner. */
-    function isExistingPathOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    /** @description Checks if the existing document exists and the current user is the resource owner. */
-    function isExistingResourceOwner(ownerId) {
-      return resource != null && isResourceOwner(ownerId);
-    }
-
     // --- User Profiles and Data ---
 
-    /**
-     * @description Rules for user account management. Access is strictly path-based.
-     * @path /users/{userId}
-     * @allow (create) Signed-in user 'abc' creating /users/abc.
-     * @deny (get) User 'abc' attempting to read /users/xyz.
-     * @principle Ownership: Only the user themselves can access or modify their profile.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingPathOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingPathOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
 
-      /**
-       * @description Rules for shipping addresses owned by a user.
-       * @path /users/{userId}/addresses/{addressId}
-       * @allow (create) User 'abc' adding an address to their own collection.
-       * @deny (list) User 'abc' listing addresses for user 'xyz'.
-       * @principle Relational Integrity: Enforces that the internal userId matches the owner path.
-       */
       match /addresses/{addressId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingPathOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingPathOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      /**
-       * @description Rules for the user's personal shopping cart.
-       * @path /users/{userId}/cart
-       * @allow (get) User 'abc' viewing their own cart status.
-       * @deny (update) User 'abc' trying to change the status of user 'xyz's cart.
-       * @principle Ownership: Ensures carts are private to the user.
-       */
       match /cart {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingPathOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingPathOwner(userId);
-
-        /**
-         * @description Rules for items within a user's cart.
-         * @path /users/{userId}/cart/cartItems/{cartItemId}
-         * @allow (create) User 'abc' adding a product to their cart.
-         * @principle Ownership: Uses path-based authorization for nested resources.
-         */
+        allow read, write: if isOwner(userId);
         match /cartItems/{cartItemId} {
-          allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isExistingPathOwner(userId);
-          allow delete: if isExistingPathOwner(userId);
+          allow read, write: if isOwner(userId);
         }
       }
 
-      /**
-       * @description Rules for orders placed by a user.
-       * @path /users/{userId}/orders/{orderId}
-       * @allow (list) User 'abc' viewing their order history.
-       * @principle Ownership: Orders are private history records.
-       */
       match /orders/{orderId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingPathOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingPathOwner(userId);
-
-        /**
-         * @description Rules for individual products inside an order.
-         * @path /users/{userId}/orders/{orderId}/orderItems/{orderItemId}
-         * @principle Ownership: Nested items inherit parent authorization.
-         */
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
         match /orderItems/{orderItemId} {
-          allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update: if isExistingPathOwner(userId);
-          allow delete: if isExistingPathOwner(userId);
+          allow read, write: if isOwner(userId);
         }
       }
     }
 
     // --- Vendor Data ---
 
-    /**
-     * @description Rules for vendor shop profiles. Publicly readable for marketplace discovery.
-     * @path /vendorProfiles/{vendorProfileId}
-     * @allow (get) Any visitor viewing a shop's profile.
-     * @allow (create) Signed-in user 'abc' creating a profile where ownerUserId is 'abc'.
-     * @principle Public Read with Owner-Only Writes: Uses resource data for write authorization.
-     */
     match /vendorProfiles/{vendorProfileId} {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.ownerUserId == request.auth.uid;
-      allow update: if isExistingResourceOwner(resource.data.ownerUserId) && request.resource.data.ownerUserId == resource.data.ownerUserId;
-      allow delete: if isExistingResourceOwner(resource.data.ownerUserId);
+      allow update, delete: if isSignedIn() && resource.data.ownerUserId == request.auth.uid;
 
-      /**
-       * @description Rules for the primary address of a vendor shop.
-       * @path /vendorProfiles/{vendorProfileId}/address
-       * @principle Denormalization for Authorization: Checks vendorOwnerUserId directly on the document.
-       */
       match /address {
         allow get, list: if true;
-        allow create: if isSignedIn() && request.resource.data.vendorOwnerUserId == request.auth.uid;
-        allow update: if isExistingResourceOwner(resource.data.vendorOwnerUserId) && request.resource.data.vendorOwnerUserId == resource.data.vendorOwnerUserId;
-        allow delete: if isExistingResourceOwner(resource.data.vendorOwnerUserId);
+        allow write: if isSignedIn() && (resource == null || resource.data.vendorOwnerUserId == request.auth.uid);
       }
 
-      /**
-       * @description Rules for products sold by a vendor.
-       * @path /vendorProfiles/{vendorProfileId}/products/{productId}
-       * @allow (list) Any visitor browsing active products.
-       * @principle Public Read with Owner-Only Writes: Enforces vendor ownership for stock management.
-       */
       match /products/{productId} {
         allow get, list: if true;
         allow create: if isSignedIn() && request.resource.data.ownerUserId == request.auth.uid;
-        allow update: if isExistingResourceOwner(resource.data.ownerUserId) && request.resource.data.ownerUserId == resource.data.ownerUserId;
-        allow delete: if isExistingResourceOwner(resource.data.ownerUserId);
+        allow update, delete: if isSignedIn() && resource.data.ownerUserId == request.auth.uid;
       }
+    }
+
+    // --- Collection Group Rules (CRITICAL for Discovery) ---
+    
+    match /{path=**}/products/{productId} {
+      allow list, get: if true;
     }
 
     // --- Global Catalog ---
 
-    /**
-     * @description Rules for product categories. Publicly readable for filtering.
-     * @path /categories/{categoryId}
-     * @allow (get) Any user reading category names for the UI.
-     * @deny (create) Any client attempting to create a new global category.
-     * @principle Read-Only: Managed by system admins or backend processes.
-     */
     match /categories/{categoryId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow write: if false; // Managed by admin/backend
     }
   }
 }
