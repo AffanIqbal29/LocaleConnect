@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,34 +12,36 @@ import {
   Truck, 
   CheckCircle2, 
   Clock, 
-  ArrowRight, 
   ShoppingBag,
   MapPin,
   ChevronRight,
-  Loader2
+  Loader2,
+  Store
 } from 'lucide-react';
 import { getOrdersByCustomerId } from '@/app/actions/order-actions';
 import { Order } from '@/app/lib/types';
 import { useAuth } from '@/components/auth-provider';
+import { useFirestore } from '@/firebase';
 
 type OrderWithShop = Order & { shopName: string };
 
 export default function MyOrdersPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [orders, setOrders] = useState<OrderWithShop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadOrders() {
-      if (user) {
+      if (user && db) {
         setIsLoading(true);
-        const data = await getOrdersByCustomerId(user.uid);
+        const data = await getOrdersByCustomerId(db, user.uid);
         setOrders(data as OrderWithShop[]);
         setIsLoading(false);
       }
     }
     loadOrders();
-  }, [user]);
+  }, [user, db]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -58,7 +61,7 @@ export default function MyOrdersPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !orders.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

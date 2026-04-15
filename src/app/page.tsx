@@ -12,21 +12,23 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { getProducts } from '@/app/actions/product-actions';
 import { getShops } from '@/app/actions/shop-actions';
 import { Product, Shop } from '@/app/lib/types';
+import { useFirestore } from '@/firebase';
 
 export default function Home() {
   const [featuredShops, setFeaturedShops] = useState<Shop[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const db = useFirestore();
 
   useEffect(() => {
     async function loadData() {
+      if (!db) return;
       setIsLoading(true);
       try {
         const [products, shops] = await Promise.all([
-          getProducts(),
-          getShops()
+          getProducts(db),
+          getShops(db)
         ]);
-        // For the home page, we'll show the top 3 of each
         setTrendingProducts(products.slice(0, 3));
         setFeaturedShops(shops.slice(0, 3));
       } catch (error) {
@@ -36,7 +38,7 @@ export default function Home() {
       }
     }
     loadData();
-  }, []);
+  }, [db]);
 
   const heroImg = PlaceHolderImages.find(img => img.id === 'hero-local');
 

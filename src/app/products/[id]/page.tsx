@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, use } from 'react';
@@ -25,12 +26,14 @@ import { useToast } from '@/hooks/use-toast';
 import { getProductById, getProducts, getReviewsByShopId } from '@/app/actions/product-actions';
 import { getShopById } from '@/app/actions/shop-actions';
 import { Product, Shop, Review } from '@/app/lib/types';
+import { useFirestore } from '@/firebase';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const db = useFirestore();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
@@ -41,14 +44,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     async function loadData() {
+      if (!db) return;
       setIsLoading(true);
-      const prod = await getProductById(id);
+      const prod = await getProductById(db, id);
       if (prod) {
         setProduct(prod);
         const [shopData, reviewsData, allProducts] = await Promise.all([
-          getShopById(prod.shopId),
-          getReviewsByShopId(prod.shopId),
-          getProducts()
+          getShopById(db, prod.shopId),
+          getReviewsByShopId(db, prod.shopId),
+          getProducts(db)
         ]);
         setShop(shopData || null);
         setReviews(reviewsData);
@@ -57,7 +61,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       setIsLoading(false);
     }
     loadData();
-  }, [id]);
+  }, [id, db]);
 
   const handleAddToCart = () => {
     if (!product) return;

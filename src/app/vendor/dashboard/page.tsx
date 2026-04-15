@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -29,9 +30,11 @@ import { useToast } from '@/hooks/use-toast';
 import { getProducts, addProduct, deleteProduct, updateProduct } from '@/app/actions/product-actions';
 import { updateShopProfile, getShopById } from '@/app/actions/shop-actions';
 import { Product, Shop } from '@/app/lib/types';
+import { useFirestore } from '@/firebase';
 
 export default function VendorDashboard() {
   const { toast } = useToast();
+  const db = useFirestore();
   const [activeTab, setActiveTab] = useState('products');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,17 +57,18 @@ export default function VendorDashboard() {
 
   useEffect(() => {
     async function loadData() {
+      if (!db) return;
       setIsLoading(true);
       const [allProducts, shop] = await Promise.all([
-        getProducts(),
-        getShopById('s1')
+        getProducts(db),
+        getShopById(db, 's1')
       ]);
       setVendorProducts(allProducts.filter(p => p.shopId === 's1'));
       if (shop) setShopInfo(shop);
       setIsLoading(false);
     }
     loadData();
-  }, []);
+  }, [db]);
 
   const handleAiDescription = async () => {
     if (!newProductForm.name || !newProductForm.keywords) {
@@ -110,13 +114,14 @@ export default function VendorDashboard() {
   };
 
   const handleAddProduct = async () => {
+    if (!db) return;
     if (!newProductForm.name || !newProductForm.price) {
       toast({ title: "Validation", description: "Name and price are required.", variant: "destructive" });
       return;
     }
 
     try {
-      const prod = await addProduct({
+      const prod = await addProduct(db, {
         name: newProductForm.name,
         price: parseFloat(newProductForm.price),
         discountPrice: newProductForm.discountPrice ? parseFloat(newProductForm.discountPrice) : undefined,
@@ -143,14 +148,16 @@ export default function VendorDashboard() {
   };
 
   const handleUpdateStock = async (id: string, newStock: number) => {
-    const updated = await updateProduct(id, { stockQuantity: newStock });
+    if (!db) return;
+    const updated = await updateProduct(db, id, { stockQuantity: newStock });
     if (updated) {
       setVendorProducts(prev => prev.map(p => p.id === id ? updated : p));
     }
   };
 
   const handleDelete = async (id: string) => {
-    const ok = await deleteProduct(id);
+    if (!db) return;
+    const ok = await deleteProduct(db, id);
     if (ok) {
       setVendorProducts(prev => prev.filter(p => p.id !== id));
       toast({ title: "Deleted", description: "Product removed from inventory." });
@@ -158,8 +165,8 @@ export default function VendorDashboard() {
   };
 
   const handleSaveShop = async () => {
-    if (!shopInfo) return;
-    await updateShopProfile(shopInfo.id, shopInfo);
+    if (!db || !shopInfo) return;
+    await updateShopProfile(db, shopInfo.id, shopInfo);
     toast({ title: "Profile Updated", description: "Your shop details have been saved." });
   };
 
