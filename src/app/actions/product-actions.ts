@@ -1,4 +1,3 @@
-
 'use client';
 
 import { 
@@ -41,15 +40,16 @@ export async function getReviewsByShopId(db: Firestore, shopId: string) {
   return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
 }
 
-export async function addProduct(db: Firestore, data: Partial<Product>) {
+export async function addProduct(db: Firestore, data: Partial<Product> & { ownerUserId?: string }) {
   const vendorProfileId = data.shopId || 's1';
   const productId = `p${Math.random().toString(36).substr(2, 9)}`;
   
   const productRef = doc(db, 'vendorProfiles', vendorProfileId, 'products', productId);
   
-  const newProduct: Product = {
+  const newProduct: any = {
     id: productId,
     shopId: vendorProfileId,
+    ownerUserId: data.ownerUserId, // Denormalized for security rules
     name: data.name || 'Untitled Product',
     description: data.description || '',
     price: data.price || 0,
@@ -63,7 +63,7 @@ export async function addProduct(db: Firestore, data: Partial<Product>) {
   };
   
   await setDoc(productRef, newProduct);
-  return newProduct;
+  return newProduct as Product;
 }
 
 export async function updateProduct(db: Firestore, id: string, data: Partial<Product>) {
@@ -77,6 +77,7 @@ export async function updateProduct(db: Firestore, id: string, data: Partial<Pro
 }
 
 export async function deleteProduct(db: Firestore, id: string) {
+  // Note: For a real app, shopId should be known or queried first
   const productRef = doc(db, 'vendorProfiles', 's1', 'products', id);
   await deleteDoc(productRef);
   return true;

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -30,11 +29,12 @@ import { useToast } from '@/hooks/use-toast';
 import { getProducts, addProduct, deleteProduct, updateProduct } from '@/app/actions/product-actions';
 import { updateShopProfile, getShopById } from '@/app/actions/shop-actions';
 import { Product, Shop } from '@/app/lib/types';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 
 export default function VendorDashboard() {
   const { toast } = useToast();
   const db = useFirestore();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState('products');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +124,7 @@ export default function VendorDashboard() {
   };
 
   const handleAddProduct = async () => {
-    if (!db) return;
+    if (!db || !user) return;
     if (!newProductForm.name || !newProductForm.price) {
       toast({ title: "Validation", description: "Name and price are required.", variant: "destructive" });
       return;
@@ -138,7 +138,8 @@ export default function VendorDashboard() {
         stockQuantity: parseInt(newProductForm.stockQuantity),
         description: newProductForm.description,
         category: newProductForm.category,
-        shopId: 's1'
+        shopId: 's1',
+        ownerUserId: user.uid // Critical for security rules
       });
       setVendorProducts(prev => [...prev, prod]);
       setNewProductForm({ 
