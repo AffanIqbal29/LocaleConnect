@@ -59,16 +59,26 @@ export default function VendorDashboard() {
     async function loadData() {
       if (!db) return;
       setIsLoading(true);
-      const [allProducts, shop] = await Promise.all([
-        getProducts(db),
-        getShopById(db, 's1')
-      ]);
-      setVendorProducts(allProducts.filter(p => p.shopId === 's1'));
-      if (shop) setShopInfo(shop);
-      setIsLoading(false);
+      try {
+        const [allProducts, shop] = await Promise.all([
+          getProducts(db),
+          getShopById(db, 's1')
+        ]);
+        setVendorProducts(allProducts.filter(p => p.shopId === 's1'));
+        if (shop) setShopInfo(shop);
+      } catch (error) {
+        console.error("Dashboard data load error:", error);
+        toast({
+          title: "Connection Error",
+          description: "Could not load shop details. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadData();
-  }, [db]);
+  }, [db, toast]);
 
   const handleAiDescription = async () => {
     if (!newProductForm.name || !newProductForm.keywords) {
@@ -378,7 +388,7 @@ export default function VendorDashboard() {
               <CardDescription>Customize your shop's appearance in the marketplace.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {shopInfo && (
+              {shopInfo ? (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -409,9 +419,15 @@ export default function VendorDashboard() {
                       onChange={(e) => setShopInfo({...shopInfo, description: e.target.value})}
                     />
                   </div>
+                  <Button className="w-full" onClick={handleSaveShop}>Save Changes</Button>
                 </>
+              ) : (
+                <div className="p-12 text-center space-y-4 border-2 border-dashed rounded-xl">
+                  <Store className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+                  <p className="text-muted-foreground">No shop profile found. Create one to get started.</p>
+                  <Button variant="outline">Initialize Shop</Button>
+                </div>
               )}
-              <Button className="w-full" onClick={handleSaveShop}>Save Changes</Button>
             </CardContent>
           </Card>
 

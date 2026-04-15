@@ -6,8 +6,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Store, Zap, Heart, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/components/auth-provider';
 
 export default function RegisterShopPage() {
+  const { user, profile } = useAuth();
+  
   const benefits = [
     {
       title: "Reach Local Customers",
@@ -30,6 +33,9 @@ export default function RegisterShopPage() {
       icon: <Heart className="h-6 w-6 text-primary" />
     }
   ];
+
+  // Determine where to send the user based on auth state
+  const destination = user ? (profile?.role === 'vendor' ? '/vendor/dashboard' : '/vendor/dashboard') : '/register';
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
@@ -81,7 +87,7 @@ export default function RegisterShopPage() {
                 <span>Cancel any time</span>
               </div>
             </div>
-            <Link href="/vendor/dashboard" className="inline-block pt-6">
+            <Link href={destination} className="inline-block pt-6">
               <Button size="lg" className="h-14 px-10 text-lg shadow-xl">
                 Open Your Shop Now <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
