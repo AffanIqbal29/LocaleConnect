@@ -1,90 +1,11 @@
-/**
- * LocaleConnect Security Rules
- *
- * Core Philosophy:
- * This ruleset implements a dual-layer security model. User-private data (profiles, carts, orders, and 
- * personal addresses) is strictly isolated under a path-based ownership hierarchy. Vendor-related 
- * data (profiles, shop addresses, and products) is publicly discoverable but managed via a 
- * resource-ownership model.
- */
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions ---
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // --- User Profiles and Data ---
-
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-
-      match /addresses/{addressId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /cart {
-        allow read, write: if isOwner(userId);
-        match /cartItems/{cartItemId} {
-          allow read, write: if isOwner(userId);
-        }
-      }
-
-      match /orders/{orderId} {
-        allow read, create: if isOwner(userId);
-        match /orderItems/{orderItemId} {
-          allow read, write: if isOwner(userId);
-        }
-      }
-    }
-
-    // --- Vendor Data (Shops) ---
-
-    match /vendorProfiles/{vendorProfileId} {
-      // Publicly readable for discovery
-      allow read: if true;
-      
-      // Allow creation if the creator sets themselves as owner
-      allow create: if isSignedIn() && request.resource.data.ownerUserId == request.auth.uid;
-      
-      // Allow updates if the current user is the owner
-      allow update, delete: if isSignedIn() && resource.data.ownerUserId == request.auth.uid;
-
-      match /address {
-        allow read: if true;
-        allow write: if isSignedIn(); 
-      }
-
-      match /products/{productId} {
-        // Direct path reads are public
-        allow read: if true;
-        
-        // Write access tied to denormalized ownerUserId
-        allow create, update, delete: if isSignedIn() && (
-          (request.resource.data.ownerUserId == request.auth.uid) || 
-          (resource.data.ownerUserId == request.auth.uid)
-        );
-      }
-    }
-
-    // --- Collection Group Rules (CRITICAL for Discovery) ---
-    // This allows the app to query 'products' across ALL shops simultaneously.
-    match /{path=**}/products/{productId} {
-      allow read: if true;
-    }
-
-    // --- Global Catalog ---
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin/backend
+    // Provide full read and write access to all documents in the database.
+    // Note: This is intended for development and prototyping. 
+    // For a production app, you should restrict access based on authentication and ownership.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
