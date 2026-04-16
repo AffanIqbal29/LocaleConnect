@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -15,6 +16,7 @@ import {
   addDoc
 } from 'firebase/firestore';
 import { Product, Review } from '@/app/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 /**
  * @fileOverview Client-side utilities for Product management using Firestore.
@@ -132,6 +134,8 @@ export async function seedSampleData(db: Firestore, currentUserId?: string) {
   const ownerId = currentUserId || 'system_seed';
   console.log("Starting database seed with ownerId:", ownerId);
 
+  const dalImg = PlaceHolderImages.find(img => img.id === 'product-dal')?.imageUrl;
+
   const sampleShops = [
     {
       id: 'shop_bakery',
@@ -170,10 +174,10 @@ export async function seedSampleData(db: Firestore, currentUserId?: string) {
 
   const sampleProducts = [
     // Shop 1: Bakery
+    { shopId: 'shop_bakery', name: "Organic Moong Dal", price: 145.00, category: "Food", imageUrl: dalImg, stockQuantity: 50, rating: 4.9, isActive: true, description: "High-quality, split yellow gram (Moong Dal) sourced from local organic farms." },
     { shopId: 'shop_bakery', name: "Wildflower Honey", price: 125.50, category: "Food", imageUrl: "https://picsum.photos/seed/honey/400/400", stockQuantity: 25, rating: 4.7, isActive: true, description: "Pure, raw honey collected from local wildflowers." },
     { shopId: 'shop_bakery', name: "Sourdough Bread", price: 80.00, category: "Food", imageUrl: "https://picsum.photos/seed/bread/400/400", stockQuantity: 10, rating: 4.9, isActive: true, description: "Naturally leavened bread with a crisp crust and airy interior." },
     { shopId: 'shop_bakery', name: "Cinnamon Rolls", price: 45.00, category: "Food", imageUrl: "https://picsum.photos/seed/roll/400/400", stockQuantity: 15, rating: 4.8, isActive: true, description: "Warm, gooey cinnamon rolls with cream cheese frosting." },
-    { shopId: 'shop_bakery', name: "Organic Granola", price: 110.00, category: "Food", imageUrl: "https://picsum.photos/seed/granola/400/400", stockQuantity: 20, rating: 4.6, isActive: true, description: "Crunchy oat granola with nuts and dried fruits." },
     
     // Shop 2: Pottery
     { shopId: 'shop_pottery', name: "Ceramic Mug", price: 240.00, category: "Home", imageUrl: "https://picsum.photos/seed/mug/400/400", stockQuantity: 12, rating: 4.9, isActive: true, description: "Hand-thrown ceramic mug with a unique glaze." },

@@ -1,0 +1,95 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-local",
+      "description": "Charming local marketplace",
+      "imageUrl": "https://picsum.photos/seed/locale1/1200/600",
+      "imageHint": "local market"
+    },
+    {
+      "id": "bakery-shop",
+      "description": "Bakery storefront with treats",
+      "imageUrl": "https://picsum.photos/seed/locale2/600/400",
+      "imageHint": "bakery shop"
+    },
+    {
+      "id": "boutique-shop",
+      "description": "Elegant clothing boutique interior",
+      "imageUrl": "https://picsum.photos/seed/locale3/600/400",
+      "imageHint": "clothing boutique"
+    },
+    {
+      "id": "cafe-shop",
+      "description": "Cozy neighborhood cafe",
+      "imageUrl": "https://picsum.photos/seed/locale4/600/400",
+      "imageHint": "cozy cafe"
+    },
+    {
+      "id": "product-dal",
+      "description": "Organic Yellow Moong Dal",
+      "imageUrl": "https://media.istockphoto.com/id/1318407036/photo/close-up-of-organic-yellow-gram-split-yellow-moong-dal-in-a-standing-jute-bag-over-wooden.jpg?s=1024x1024&w=is&k=20&c=4u2TrhVyp9Ieym6uRus5IovCbPtlqepmNOkQ7Jr65eI=",
+      "imageHint": "moong dal"
+    },
+    {
+      "id": "product-mug",
+      "description": "Handmade ceramic mug",
+      "imageUrl": "https://picsum.photos/seed/mug123/400/400",
+      "imageHint": "ceramic mug"
+    },
+    {
+      "id": "product-coffee",
+      "description": "Artisanal coffee beans bag",
+      "imageUrl": "https://picsum.photos/seed/coffee456/400/400",
+      "imageHint": "coffee bag"
+    },
+    {
+      "id": "product-honey",
+      "description": "Bottle of local organic honey",
+      "imageUrl": "https://picsum.photos/seed/honey789/400/400",
+      "imageHint": "honey bottle"
+    },
+    {
+      "id": "product-candle",
+      "description": "Hand-poured soy candle",
+      "imageUrl": "https://picsum.photos/seed/candle101/400/400",
+      "imageHint": "scented candle"
+    },
+    {
+      "id": "product-soap",
+      "description": "Organic artisan soap bar",
+      "imageUrl": "https://picsum.photos/seed/soap202/400/400",
+      "imageHint": "artisan soap"
+    },
+    {
+      "id": "product-tote",
+      "description": "Hand-painted canvas tote",
+      "imageUrl": "https://picsum.photos/seed/tote303/400/400",
+      "imageHint": "canvas bag"
+    },
+    {
+      "id": "product-spoon",
+      "description": "Hand-carved wooden spoons",
+      "imageUrl": "https://picsum.photos/seed/spoon404/400/400",
+      "imageHint": "wooden spoon"
+    },
+    {
+      "id": "product-scarf",
+      "description": "Hand-knitted woolen scarf",
+      "imageUrl": "https://picsum.photos/seed/scarf505/400/400",
+      "imageHint": "knitted scarf"
+    },
+    {
+      "id": "product-bread",
+      "description": "Freshly baked sourdough bread loaf",
+      "imageUrl": "https://picsum.photos/seed/bread606/400/400",
+      "imageHint": "sourdough bread"
+    },
+    {
+      "id": "product-jacket",
+      "description": "Classic vintage denim jacket",
+      "imageUrl": "https://picsum.photos/seed/jacket707/400/400",
+      "imageHint": "denim jacket"
+    }
+  ]
+}
