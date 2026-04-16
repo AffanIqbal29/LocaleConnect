@@ -1,4 +1,3 @@
-
 'use client';
 
 import { 
@@ -11,7 +10,8 @@ import {
   deleteDoc, 
   query, 
   where,
-  Firestore
+  Firestore,
+  serverTimestamp
 } from 'firebase/firestore';
 import { Product, Review } from '@/app/lib/types';
 
@@ -34,7 +34,6 @@ export async function getProducts(db: Firestore) {
           ...data, 
           id: doc.id,
           shopId: shopDoc.id,
-          // Robust image handling: check both imageUrl and imageUrls[0]
           imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`
         } as Product;
       });
@@ -107,7 +106,7 @@ export async function addProduct(db: Firestore, data: Partial<Product> & { owner
   const newProduct: any = {
     id: productId,
     shopId: data.shopId,
-    ownerUserId: data.ownerUserId,
+    ownerUserId: data.ownerUserId || 'system',
     name: data.name || 'Untitled Product',
     description: data.description || '',
     price: data.price || 0,
@@ -117,22 +116,89 @@ export async function addProduct(db: Firestore, data: Partial<Product> & { owner
     stockQuantity: data.stockQuantity || 0,
     isActive: true,
     rating: data.rating || 0,
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
   };
   
-  await setDoc(productRef, newProduct);
+  setDoc(productRef, newProduct);
   return newProduct as Product;
 }
 
 export async function updateProduct(db: Firestore, id: string, shopId: string, data: Partial<Product>) {
   const productRef = doc(db, 'vendorProfiles', shopId, 'products', id);
-  await updateDoc(productRef, data);
-  const updated = await getDoc(productRef);
-  return updated.exists() ? { ...updated.data(), id: updated.id, shopId } as Product : null;
+  updateDoc(productRef, data);
 }
 
 export async function deleteProduct(db: Firestore, id: string, shopId: string) {
   const productRef = doc(db, 'vendorProfiles', shopId, 'products', id);
-  await deleteDoc(productRef);
+  deleteDoc(productRef);
   return true;
+}
+
+export async function seedSampleData(db: Firestore) {
+  const sampleShops = [
+    {
+      id: 's1',
+      name: "Bloom Bakery",
+      type: "Bakery",
+      description: "Artisan sourdough and neighborhood favorites baked fresh daily using locally sourced organic ingredients.",
+      location: "123 Maple St, Old Town",
+      hours: "8 AM - 6 PM",
+      rating: 4.8,
+      imageUrl: "https://picsum.photos/seed/bakery/600/400",
+      ownerUserId: 'system_seed'
+    },
+    {
+      id: 's2',
+      name: "Clay Creations",
+      type: "Pottery",
+      description: "Handcrafted ceramics made right here in the neighborhood. Unique pieces for your home.",
+      location: "101 River Road",
+      hours: "11 AM - 4 PM",
+      rating: 5.0,
+      imageUrl: "https://picsum.photos/seed/pottery/600/400",
+      ownerUserId: 'system_seed'
+    }
+  ];
+
+  const sampleProducts = [
+    {
+      shopId: 's1',
+      name: "Wildflower Honey",
+      description: "Pure, raw honey collected from local wildflowers.",
+      price: 125.50,
+      category: "Food",
+      imageUrl: "https://picsum.photos/seed/honey/400/400",
+      stockQuantity: 25,
+      rating: 4.7
+    },
+    {
+      shopId: 's1',
+      name: "Sourdough Bread",
+      description: "Naturally leavened bread with a crisp crust and airy interior.",
+      price: 80.00,
+      category: "Food",
+      imageUrl: "https://picsum.photos/seed/bread/400/400",
+      stockQuantity: 10,
+      rating: 4.9
+    },
+    {
+      shopId: 's2',
+      name: "Handcrafted Ceramic Mug",
+      description: "A beautiful, hand-thrown ceramic mug with a unique glaze finish.",
+      price: 240.00,
+      category: "Home",
+      imageUrl: "https://picsum.photos/seed/mug/400/400",
+      stockQuantity: 12,
+      rating: 4.9
+    }
+  ];
+
+  for (const shop of sampleShops) {
+    const shopRef = doc(db, 'vendorProfiles', shop.id);
+    setDoc(shopRef, { ...shop, createdAt: serverTimestamp() });
+  }
+
+  for (const prod of sampleProducts) {
+    await addProduct(db, prod);
+  }
 }

@@ -16,7 +16,8 @@ import {
   Star, 
   Eye, 
   XCircle,
-  ChevronDown
+  ChevronDown,
+  Database
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,7 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Product, Shop } from '@/app/lib/types';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { getProducts } from '@/app/actions/product-actions';
+import { getProducts, seedSampleData } from '@/app/actions/product-actions';
 
 export default function ProductsPage() {
   const { addToCart } = useCart();
@@ -42,32 +43,31 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
+  const [isSeeding, setIsSeeding] = useState(false);
   
-  // Products state for manual fetching (to avoid collectionGroup index error)
   const [products, setProducts] = useState<Product[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(true);
 
-  // Fetch Shops using real-time hook
   const shopsQuery = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, 'vendorProfiles');
   }, [db]);
   const { data: shops, isLoading: shopsLoading } = useCollection<Shop>(shopsQuery);
 
-  // Manual fetch for products when db or shops are ready
-  useEffect(() => {
-    async function fetchProducts() {
-      if (!db) return;
-      setProductsLoading(true);
-      try {
-        const data = await getProducts(db);
-        setProducts(data);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      } finally {
-        setProductsLoading(false);
-      }
+  const fetchProducts = async () => {
+    if (!db) return;
+    setProductsLoading(true);
+    try {
+      const data = await getProducts(db);
+      setProducts(data);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setProductsLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, [db, shops]);
 
@@ -87,7 +87,6 @@ export default function ProductsPage() {
       return categoryMatch && (nameMatch || shopMatch || categoryTextMatch);
     });
 
-    // Sorting logic
     if (sortBy === "price-low") {
       result.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
     } else if (sortBy === "price-high") {
@@ -95,7 +94,6 @@ export default function ProductsPage() {
     } else if (sortBy === "rating") {
       result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else {
-      // Default to Newest
       result.sort((a, b) => {
         const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as any)?.toDate?.() || new Date(a.createdAt);
         const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as any)?.toDate?.() || new Date(b.createdAt);
@@ -125,6 +123,27 @@ export default function ProductsPage() {
       title: "Added to cart!",
       description: `${product.name} has been added.`
     });
+  };
+
+  const handleSeedData = async () => {
+    if (!db) return;
+    setIsSeeding(true);
+    try {
+      await seedSampleData(db);
+      toast({
+        title: "Database Seeded!",
+        description: "Initial neighborhood treasures have been added.",
+      });
+      await fetchProducts();
+    } catch (err) {
+      toast({
+        title: "Seed Failed",
+        description: "Could not add sample data.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
   const clearFilters = () => {
@@ -229,18 +248,7 @@ export default function ProductsPage() {
                           </Badge>
                         )}
                       </div>
-                      {product.stockQuantity < 5 && product.stockQuantity > 0 && (
-                        <div className="absolute top-3 right-3">
-                           <Badge variant="destructive" className="h-5 text-[10px]">Only {product.stockQuantity} Left</Badge>
-                        </div>
-                      )}
-                      {product.stockQuantity === 0 && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                          <Badge variant="destructive" className="text-sm font-bold px-4 py-1">Out of Stock</Badge>
-                        </div>
-                      )}
                       
-                      {/* Hover Actions */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-[2px]">
                         <Button 
                           className="w-[80%] h-11 bg-primary text-white shadow-xl font-bold"
@@ -295,7 +303,7 @@ export default function ProductsPage() {
           </div>
 
           {filteredProducts.length === 0 && (
-            <div className="py-32 text-center space-y-4">
+            <div className="py-32 text-center space-y-6">
               <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -303,9 +311,28 @@ export default function ProductsPage() {
               <p className="text-muted-foreground max-w-xs mx-auto text-sm">
                 We couldn't find any products matching your current filters. Try adjusting your search or category.
               </p>
-              <Button variant="outline" onClick={clearFilters} className="mt-4 rounded-full">
-                Clear all filters
-              </Button>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Button variant="outline" onClick={clearFilters} className="rounded-full">
+                  Clear all filters
+                </Button>
+                
+                {products?.length === 0 && (
+                  <Button 
+                    variant="default" 
+                    onClick={handleSeedData} 
+                    disabled={isSeeding}
+                    className="rounded-full shadow-lg"
+                  >
+                    {isSeeding ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Database className="h-4 w-4 mr-2" />
+                    )}
+                    Seed Sample Data
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </>
