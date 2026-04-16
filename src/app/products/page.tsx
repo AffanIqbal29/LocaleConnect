@@ -48,6 +48,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(true);
 
+  // Use real-time listener for shops to keep UI in sync
   const shopsQuery = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, 'vendorProfiles');
@@ -67,6 +68,7 @@ export default function ProductsPage() {
     }
   };
 
+  // Refetch products when shops change or component mounts
   useEffect(() => {
     fetchProducts();
   }, [db, shops]);
@@ -134,7 +136,7 @@ export default function ProductsPage() {
         title: "Database Seeded!",
         description: "Initial neighborhood treasures have been added.",
       });
-      await fetchProducts();
+      // fetchProducts is triggered automatically by the useEffect listening to 'shops'
     } catch (err) {
       toast({
         title: "Seed Failed",
@@ -152,7 +154,7 @@ export default function ProductsPage() {
     setSortBy("newest");
   };
 
-  const isLoading = productsLoading || shopsLoading;
+  const isLoading = productsLoading && !products;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -302,14 +304,14 @@ export default function ProductsPage() {
             })}
           </div>
 
-          {filteredProducts.length === 0 && (
+          {(products?.length === 0 || filteredProducts.length === 0) && (
             <div className="py-32 text-center space-y-6">
               <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="h-10 w-10 text-muted-foreground" />
               </div>
               <h3 className="text-2xl font-headline">No neighborhood treasures found</h3>
               <p className="text-muted-foreground max-w-xs mx-auto text-sm">
-                We couldn't find any products matching your current filters. Try adjusting your search or category.
+                We couldn't find any products in the database. You can seed some sample data to see the marketplace in action.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -317,21 +319,19 @@ export default function ProductsPage() {
                   Clear all filters
                 </Button>
                 
-                {products?.length === 0 && (
-                  <Button 
-                    variant="default" 
-                    onClick={handleSeedData} 
-                    disabled={isSeeding}
-                    className="rounded-full shadow-lg"
-                  >
-                    {isSeeding ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Database className="h-4 w-4 mr-2" />
-                    )}
-                    Seed Sample Data
-                  </Button>
-                )}
+                <Button 
+                  variant="default" 
+                  onClick={handleSeedData} 
+                  disabled={isSeeding}
+                  className="rounded-full shadow-lg h-12 px-8"
+                >
+                  {isSeeding ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Database className="h-4 w-4 mr-2" />
+                  )}
+                  {isSeeding ? "Seeding..." : "Seed Sample Data"}
+                </Button>
               </div>
             </div>
           )}

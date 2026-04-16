@@ -11,7 +11,8 @@ import {
   query, 
   where,
   Firestore,
-  serverTimestamp
+  serverTimestamp,
+  collectionGroup
 } from 'firebase/firestore';
 import { Product, Review } from '@/app/lib/types';
 
@@ -19,39 +20,43 @@ import { Product, Review } from '@/app/lib/types';
  * @fileOverview Client-side utilities for Product management using Firestore.
  */
 
+/**
+ * Fetches all products across ALL vendor profiles using collectionGroup.
+ */
 export async function getProducts(db: Firestore) {
   try {
-    const shopsRef = collection(db, 'vendorProfiles');
-    const shopsSnap = await getDocs(shopsRef);
+    // Fetch all products across all vendors using collectionGroup
+    // This allows querying subcollections regardless of their parent document
+    const productsQuery = collectionGroup(db, 'products');
+    const snapshot = await getDocs(productsQuery);
     
-    if (shopsSnap.empty) return [];
+    if (snapshot.empty) return [];
 
-    const productPromises = shopsSnap.docs.map(async (shopDoc) => {
-      const productsRef = collection(db, 'vendorProfiles', shopDoc.id, 'products');
-      // We still want active products for discovery
-      const productsQuery = query(productsRef, where('isActive', '==', true));
-      const productsSnap = await getDocs(productsQuery);
+    const allProducts = snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      // In a collectionGroup query, the parent of the parent is the vendorProfile document
+      const vendorId = docSnap.ref.parent.parent?.id || 'unknown';
       
-      return productsSnap.docs.map(doc => {
-        const data = doc.data();
-        return { 
-          ...data, 
-          id: doc.id,
-          shopId: shopDoc.id,
-          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
-        } as Product;
-      });
+      return { 
+        ...data, 
+        id: docSnap.id,
+        shopId: vendorId,
+        imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${docSnap.id}/400/400`,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
+      } as Product;
     });
 
-    const productsArrays = await Promise.all(productPromises);
-    return productsArrays.flat();
+    // Filter active products in memory to avoid requiring a specific Collection Group index for isActive
+    return allProducts.filter(p => p.isActive === true);
   } catch (error) {
     console.error("Error in getProducts:", error);
     return [];
   }
 }
 
+/**
+ * Fetches products for a specific shop ID.
+ */
 export async function getProductsByShopId(db: Firestore, shopId: string) {
   try {
     const productsRef = collection(db, 'vendorProfiles', shopId, 'products');
@@ -72,24 +77,24 @@ export async function getProductsByShopId(db: Firestore, shopId: string) {
   }
 }
 
+/**
+ * Fetches a single product by ID by searching across all shops.
+ */
 export async function getProductById(db: Firestore, id: string) {
   try {
-    const shopsRef = collection(db, 'vendorProfiles');
-    const shopsSnap = await getDocs(shopsRef);
+    const productsQuery = collectionGroup(db, 'products');
+    const snapshot = await getDocs(productsQuery);
     
-    for (const shopDoc of shopsSnap.docs) {
-      const productRef = doc(db, 'vendorProfiles', shopDoc.id, 'products', id);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const data = productSnap.data();
-        return { 
-          ...data, 
-          id: productSnap.id, 
-          shopId: shopDoc.id,
-          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${productSnap.id}/400/400`,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
-        } as Product;
-      }
+    const docSnap = snapshot.docs.find(d => d.id === id);
+    if (docSnap) {
+      const data = docSnap.data();
+      return { 
+        ...data, 
+        id: docSnap.id, 
+        shopId: docSnap.ref.parent.parent?.id || 'unknown',
+        imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${docSnap.id}/400/400`,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
+      } as Product;
     }
   } catch (error) {
     console.error("Error in getProductById:", error);
@@ -111,7 +116,7 @@ export async function getReviewsByShopId(db: Firestore, shopId: string) {
 export async function addProduct(db: Firestore, data: Partial<Product> & { ownerUserId?: string }) {
   if (!data.shopId) throw new Error("Shop ID is required to add a product.");
   
-  const productId = `p_${Math.random().toString(36).substr(2, 9)}`;
+  const productId = data.id || `p_${Math.random().toString(36).substr(2, 9)}`;
   const productRef = doc(db, 'vendorProfiles', data.shopId, 'products', productId);
   
   const newProduct: any = {
@@ -180,7 +185,8 @@ export async function seedSampleData(db: Firestore) {
       category: "Food",
       imageUrl: "https://picsum.photos/seed/honey/400/400",
       stockQuantity: 25,
-      rating: 4.7
+      rating: 4.7,
+      isActive: true
     },
     {
       shopId: 'shop_bakery',
@@ -190,7 +196,8 @@ export async function seedSampleData(db: Firestore) {
       category: "Food",
       imageUrl: "https://picsum.photos/seed/bread/400/400",
       stockQuantity: 10,
-      rating: 4.9
+      rating: 4.9,
+      isActive: true
     },
     {
       shopId: 'shop_pottery',
@@ -200,7 +207,8 @@ export async function seedSampleData(db: Firestore) {
       category: "Home",
       imageUrl: "https://picsum.photos/seed/mug/400/400",
       stockQuantity: 12,
-      rating: 4.9
+      rating: 4.9,
+      isActive: true
     }
   ];
 
