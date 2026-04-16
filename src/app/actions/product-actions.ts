@@ -24,17 +24,22 @@ export async function getProducts(db: Firestore) {
     const shopsRef = collection(db, 'vendorProfiles');
     const shopsSnap = await getDocs(shopsRef);
     
+    if (shopsSnap.empty) return [];
+
     const productPromises = shopsSnap.docs.map(async (shopDoc) => {
       const productsRef = collection(db, 'vendorProfiles', shopDoc.id, 'products');
+      // We still want active products for discovery
       const productsQuery = query(productsRef, where('isActive', '==', true));
       const productsSnap = await getDocs(productsQuery);
+      
       return productsSnap.docs.map(doc => {
         const data = doc.data();
         return { 
           ...data, 
           id: doc.id,
           shopId: shopDoc.id,
-          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`
+          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
         } as Product;
       });
     });
@@ -55,9 +60,10 @@ export async function getProductsByShopId(db: Firestore, shopId: string) {
       const data = doc.data();
       return { 
         ...data, 
-        id: doc.id,
+        id: doc.id, 
         shopId: shopId,
-        imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`
+        imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
       } as Product;
     });
   } catch (error) {
@@ -80,7 +86,8 @@ export async function getProductById(db: Firestore, id: string) {
           ...data, 
           id: productSnap.id, 
           shopId: shopDoc.id,
-          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${productSnap.id}/400/400`
+          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${productSnap.id}/400/400`,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
         } as Product;
       }
     }
@@ -94,13 +101,17 @@ export async function getReviewsByShopId(db: Firestore, shopId: string) {
   const reviewsRef = collection(db, 'reviews');
   const q = query(reviewsRef, where('shopId', '==', shopId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
+  return snapshot.docs.map(doc => ({ 
+    ...doc.data(), 
+    id: doc.id,
+    createdAt: (doc.data() as any).createdAt?.toDate ? (doc.data() as any).createdAt.toDate() : new Date((doc.data() as any).createdAt || Date.now())
+  } as Review));
 }
 
 export async function addProduct(db: Firestore, data: Partial<Product> & { ownerUserId?: string }) {
   if (!data.shopId) throw new Error("Shop ID is required to add a product.");
   
-  const productId = `p${Math.random().toString(36).substr(2, 9)}`;
+  const productId = `p_${Math.random().toString(36).substr(2, 9)}`;
   const productRef = doc(db, 'vendorProfiles', data.shopId, 'products', productId);
   
   const newProduct: any = {
@@ -119,25 +130,25 @@ export async function addProduct(db: Firestore, data: Partial<Product> & { owner
     createdAt: serverTimestamp(),
   };
   
-  setDoc(productRef, newProduct);
-  return newProduct as Product;
+  await setDoc(productRef, newProduct);
+  return { ...newProduct, createdAt: new Date() } as Product;
 }
 
 export async function updateProduct(db: Firestore, id: string, shopId: string, data: Partial<Product>) {
   const productRef = doc(db, 'vendorProfiles', shopId, 'products', id);
-  updateDoc(productRef, data);
+  await updateDoc(productRef, { ...data, updatedAt: serverTimestamp() });
 }
 
 export async function deleteProduct(db: Firestore, id: string, shopId: string) {
   const productRef = doc(db, 'vendorProfiles', shopId, 'products', id);
-  deleteDoc(productRef);
+  await deleteDoc(productRef);
   return true;
 }
 
 export async function seedSampleData(db: Firestore) {
   const sampleShops = [
     {
-      id: 's1',
+      id: 'shop_bakery',
       name: "Bloom Bakery",
       type: "Bakery",
       description: "Artisan sourdough and neighborhood favorites baked fresh daily using locally sourced organic ingredients.",
@@ -148,7 +159,7 @@ export async function seedSampleData(db: Firestore) {
       ownerUserId: 'system_seed'
     },
     {
-      id: 's2',
+      id: 'shop_pottery',
       name: "Clay Creations",
       type: "Pottery",
       description: "Handcrafted ceramics made right here in the neighborhood. Unique pieces for your home.",
@@ -162,7 +173,7 @@ export async function seedSampleData(db: Firestore) {
 
   const sampleProducts = [
     {
-      shopId: 's1',
+      shopId: 'shop_bakery',
       name: "Wildflower Honey",
       description: "Pure, raw honey collected from local wildflowers.",
       price: 125.50,
@@ -172,7 +183,7 @@ export async function seedSampleData(db: Firestore) {
       rating: 4.7
     },
     {
-      shopId: 's1',
+      shopId: 'shop_bakery',
       name: "Sourdough Bread",
       description: "Naturally leavened bread with a crisp crust and airy interior.",
       price: 80.00,
@@ -182,7 +193,7 @@ export async function seedSampleData(db: Firestore) {
       rating: 4.9
     },
     {
-      shopId: 's2',
+      shopId: 'shop_pottery',
       name: "Handcrafted Ceramic Mug",
       description: "A beautiful, hand-thrown ceramic mug with a unique glaze finish.",
       price: 240.00,
@@ -193,12 +204,14 @@ export async function seedSampleData(db: Firestore) {
     }
   ];
 
+  // Await all shop creations
   for (const shop of sampleShops) {
     const shopRef = doc(db, 'vendorProfiles', shop.id);
-    setDoc(shopRef, { ...shop, createdAt: serverTimestamp() });
+    await setDoc(shopRef, { ...shop, createdAt: serverTimestamp() });
   }
 
+  // Await all product creations
   for (const prod of sampleProducts) {
-    await addProduct(db, prod);
+    await addProduct(db, { ...prod, ownerUserId: 'system_seed' });
   }
 }
