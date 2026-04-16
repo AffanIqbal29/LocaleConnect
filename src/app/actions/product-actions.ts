@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -16,25 +17,27 @@ import { Product, Review } from '@/app/lib/types';
 
 /**
  * @fileOverview Client-side utilities for Product management using Firestore.
- * These functions have been updated to avoid collectionGroup queries which require manual indexing.
  */
 
 export async function getProducts(db: Firestore) {
   try {
-    // Step 1: Get all vendor profiles
     const shopsRef = collection(db, 'vendorProfiles');
     const shopsSnap = await getDocs(shopsRef);
     
-    // Step 2: Fetch products for each shop manually to avoid collectionGroup index requirement
     const productPromises = shopsSnap.docs.map(async (shopDoc) => {
       const productsRef = collection(db, 'vendorProfiles', shopDoc.id, 'products');
       const productsQuery = query(productsRef, where('isActive', '==', true));
       const productsSnap = await getDocs(productsQuery);
-      return productsSnap.docs.map(doc => ({ 
-        ...doc.data(), 
-        id: doc.id,
-        shopId: shopDoc.id // Ensure shopId is present
-      } as Product));
+      return productsSnap.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          ...data, 
+          id: doc.id,
+          shopId: shopDoc.id,
+          // Robust image handling: check both imageUrl and imageUrls[0]
+          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`
+        } as Product;
+      });
     });
 
     const productsArrays = await Promise.all(productPromises);
@@ -45,9 +48,27 @@ export async function getProducts(db: Firestore) {
   }
 }
 
+export async function getProductsByShopId(db: Firestore, shopId: string) {
+  try {
+    const productsRef = collection(db, 'vendorProfiles', shopId, 'products');
+    const productsSnap = await getDocs(productsRef);
+    return productsSnap.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        ...data, 
+        id: doc.id,
+        shopId: shopId,
+        imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${doc.id}/400/400`
+      } as Product;
+    });
+  } catch (error) {
+    console.error("Error in getProductsByShopId:", error);
+    return [];
+  }
+}
+
 export async function getProductById(db: Firestore, id: string) {
   try {
-    // Since we don't have the shopId, we search across shops manually
     const shopsRef = collection(db, 'vendorProfiles');
     const shopsSnap = await getDocs(shopsRef);
     
@@ -55,7 +76,13 @@ export async function getProductById(db: Firestore, id: string) {
       const productRef = doc(db, 'vendorProfiles', shopDoc.id, 'products', id);
       const productSnap = await getDoc(productRef);
       if (productSnap.exists()) {
-        return { ...productSnap.data(), id: productSnap.id, shopId: shopDoc.id } as Product;
+        const data = productSnap.data();
+        return { 
+          ...data, 
+          id: productSnap.id, 
+          shopId: shopDoc.id,
+          imageUrl: data.imageUrl || (data.imageUrls && data.imageUrls[0]) || `https://picsum.photos/seed/${productSnap.id}/400/400`
+        } as Product;
       }
     }
   } catch (error) {
@@ -72,14 +99,14 @@ export async function getReviewsByShopId(db: Firestore, shopId: string) {
 }
 
 export async function addProduct(db: Firestore, data: Partial<Product> & { ownerUserId?: string }) {
-  const vendorProfileId = data.shopId || 's1';
-  const productId = `p${Math.random().toString(36).substr(2, 9)}`;
+  if (!data.shopId) throw new Error("Shop ID is required to add a product.");
   
-  const productRef = doc(db, 'vendorProfiles', vendorProfileId, 'products', productId);
+  const productId = `p${Math.random().toString(36).substr(2, 9)}`;
+  const productRef = doc(db, 'vendorProfiles', data.shopId, 'products', productId);
   
   const newProduct: any = {
     id: productId,
-    shopId: vendorProfileId,
+    shopId: data.shopId,
     ownerUserId: data.ownerUserId,
     name: data.name || 'Untitled Product',
     description: data.description || '',
@@ -97,19 +124,15 @@ export async function addProduct(db: Firestore, data: Partial<Product> & { owner
   return newProduct as Product;
 }
 
-export async function updateProduct(db: Firestore, id: string, data: Partial<Product>) {
-  const shopId = data.shopId || 's1';
+export async function updateProduct(db: Firestore, id: string, shopId: string, data: Partial<Product>) {
   const productRef = doc(db, 'vendorProfiles', shopId, 'products', id);
-  
   await updateDoc(productRef, data);
-  
   const updated = await getDoc(productRef);
-  return updated.exists() ? { ...updated.data(), id: updated.id } as Product : null;
+  return updated.exists() ? { ...updated.data(), id: updated.id, shopId } as Product : null;
 }
 
-export async function deleteProduct(db: Firestore, id: string) {
-  // In a real app, you'd pass the shopId. For MVP, we'll try a common one or find it.
-  const productRef = doc(db, 'vendorProfiles', 's1', 'products', id);
+export async function deleteProduct(db: Firestore, id: string, shopId: string) {
+  const productRef = doc(db, 'vendorProfiles', shopId, 'products', id);
   await deleteDoc(productRef);
   return true;
 }
