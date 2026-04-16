@@ -10,27 +10,58 @@ import {
   deleteDoc, 
   query, 
   where,
-  collectionGroup,
   Firestore
 } from 'firebase/firestore';
 import { Product, Review } from '@/app/lib/types';
 
 /**
  * @fileOverview Client-side utilities for Product management using Firestore.
- * These functions require a firestore instance to be passed in.
+ * These functions have been updated to avoid collectionGroup queries which require manual indexing.
  */
 
 export async function getProducts(db: Firestore) {
-  const productsQuery = query(collectionGroup(db, 'products'), where('isActive', '==', true));
-  const snapshot = await getDocs(productsQuery);
-  return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
+  try {
+    // Step 1: Get all vendor profiles
+    const shopsRef = collection(db, 'vendorProfiles');
+    const shopsSnap = await getDocs(shopsRef);
+    
+    // Step 2: Fetch products for each shop manually to avoid collectionGroup index requirement
+    const productPromises = shopsSnap.docs.map(async (shopDoc) => {
+      const productsRef = collection(db, 'vendorProfiles', shopDoc.id, 'products');
+      const productsQuery = query(productsRef, where('isActive', '==', true));
+      const productsSnap = await getDocs(productsQuery);
+      return productsSnap.docs.map(doc => ({ 
+        ...doc.data(), 
+        id: doc.id,
+        shopId: shopDoc.id // Ensure shopId is present
+      } as Product));
+    });
+
+    const productsArrays = await Promise.all(productPromises);
+    return productsArrays.flat();
+  } catch (error) {
+    console.error("Error in getProducts:", error);
+    return [];
+  }
 }
 
 export async function getProductById(db: Firestore, id: string) {
-  const productsQuery = query(collectionGroup(db, 'products'), where('id', '==', id));
-  const snapshot = await getDocs(productsQuery);
-  if (snapshot.empty) return null;
-  return { ...snapshot.docs[0].data(), id: snapshot.docs[0].id } as Product;
+  try {
+    // Since we don't have the shopId, we search across shops manually
+    const shopsRef = collection(db, 'vendorProfiles');
+    const shopsSnap = await getDocs(shopsRef);
+    
+    for (const shopDoc of shopsSnap.docs) {
+      const productRef = doc(db, 'vendorProfiles', shopDoc.id, 'products', id);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        return { ...productSnap.data(), id: productSnap.id, shopId: shopDoc.id } as Product;
+      }
+    }
+  } catch (error) {
+    console.error("Error in getProductById:", error);
+  }
+  return null;
 }
 
 export async function getReviewsByShopId(db: Firestore, shopId: string) {
@@ -49,7 +80,7 @@ export async function addProduct(db: Firestore, data: Partial<Product> & { owner
   const newProduct: any = {
     id: productId,
     shopId: vendorProfileId,
-    ownerUserId: data.ownerUserId, // Denormalized for security rules
+    ownerUserId: data.ownerUserId,
     name: data.name || 'Untitled Product',
     description: data.description || '',
     price: data.price || 0,
@@ -77,7 +108,7 @@ export async function updateProduct(db: Firestore, id: string, data: Partial<Pro
 }
 
 export async function deleteProduct(db: Firestore, id: string) {
-  // Note: For a real app, shopId should be known or queried first
+  // In a real app, you'd pass the shopId. For MVP, we'll try a common one or find it.
   const productRef = doc(db, 'vendorProfiles', 's1', 'products', id);
   await deleteDoc(productRef);
   return true;

@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -32,22 +31,21 @@ import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Shop } from '@/app/lib/types';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { query, collectionGroup, where, collection } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
+import { getProducts } from '@/app/actions/product-actions';
 
 export default function ProductsPage() {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const db = useFirestore();
+  
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
-
-  // Fetch Products using real-time hook
-  const productsQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collectionGroup(db, 'products'), where('isActive', '==', true));
-  }, [db]);
-  const { data: products, isLoading: productsLoading } = useCollection<Product>(productsQuery);
+  
+  // Products state for manual fetching (to avoid collectionGroup index error)
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [productsLoading, setProductsLoading] = useState(true);
 
   // Fetch Shops using real-time hook
   const shopsQuery = useMemoFirebase(() => {
@@ -55,6 +53,23 @@ export default function ProductsPage() {
     return collection(db, 'vendorProfiles');
   }, [db]);
   const { data: shops, isLoading: shopsLoading } = useCollection<Shop>(shopsQuery);
+
+  // Manual fetch for products when db or shops are ready
+  useEffect(() => {
+    async function fetchProducts() {
+      if (!db) return;
+      setProductsLoading(true);
+      try {
+        const data = await getProducts(db);
+        setProducts(data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setProductsLoading(false);
+      }
+    }
+    fetchProducts();
+  }, [db, shops]);
 
   const categories = ["All", "Food", "Clothing", "Home", "Jewelry"];
 
