@@ -31,7 +31,7 @@ import {
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Shop } from '@/app/lib/types';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { getProducts, seedSampleData } from '@/app/actions/product-actions';
 
@@ -39,6 +39,7 @@ export default function ProductsPage() {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const db = useFirestore();
+  const { user } = useUser();
   
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -48,12 +49,11 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(true);
 
-  // Use real-time listener for shops to keep UI in sync
   const shopsQuery = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, 'vendorProfiles');
   }, [db]);
-  const { data: shops, isLoading: shopsLoading } = useCollection<Shop>(shopsQuery);
+  const { data: shops } = useCollection<Shop>(shopsQuery);
 
   const fetchProducts = async () => {
     if (!db) return;
@@ -68,7 +68,6 @@ export default function ProductsPage() {
     }
   };
 
-  // Refetch products when shops change or component mounts
   useEffect(() => {
     fetchProducts();
   }, [db, shops]);
@@ -131,16 +130,17 @@ export default function ProductsPage() {
     if (!db) return;
     setIsSeeding(true);
     try {
-      await seedSampleData(db);
+      await seedSampleData(db, user?.uid);
       toast({
         title: "Database Seeded!",
         description: "Initial neighborhood treasures have been added.",
       });
-      // fetchProducts is triggered automatically by the useEffect listening to 'shops'
-    } catch (err) {
+      await fetchProducts();
+    } catch (err: any) {
+      console.error("Seeding operation failed:", err);
       toast({
         title: "Seed Failed",
-        description: "Could not add sample data.",
+        description: err.message || "Could not add sample data. Check the console for details.",
         variant: "destructive"
       });
     } finally {
